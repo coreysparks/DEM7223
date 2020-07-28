@@ -1,0 +1,219 @@
+---
+title: "DEM 7223 - Event History Analysis - Comparing Survival Times Between Groups"
+author: "Corey Sparks, PhD"
+date: July 28, 2020
+output:
+   html_document:
+    keep_md: true    
+    fig_height: 7
+    fig_width: 7
+    toc: yes
+    includes:
+      in_header: logo.html
+---
+
+This example will illustrate how to test for differences between survival functions estimated by the Kaplan-Meier product limit estimator. The tests all follow the methods described by Harrington and Fleming (1982) [Link](http://biomet.oxfordjournals.org/content/69/3/553.short). 
+
+The first example will use as its outcome variable, the event of a child dying before age 1. The data for this example come from the model.data [Demographic and Health Survey for 2012](http://dhsprogram.com/data/dataset/model.dat_Standard-DHS_2012.cfm?flag=0) children's recode file. This file contains information for all births in the last 5 years prior to the survey.
+
+The second example, we will examine how to calculate the survival function for a longitudinally collected data set. Here I use data from the [ECLS-K ](http://nces.ed.gov/ecls/kinderdatainformation.asp). Specifically, we will examine the transition into poverty between kindergarten and fifth grade. 
+
+```{r}
+#load libraries
+library(haven)
+library(survival)
+library(car)
+library(muhaz)
+model.dat<-read_dta("https://github.com/coreysparks/data/blob/master/ZZKR62FL.DTA?raw=true")
+model.dat<-zap_labels(model.dat)
+```
+
+
+## Event - Infant Mortality
+In the DHS, they record if a child is dead or alive and the age at death if the child is dead. This can be understood using a series of variables about each child. 
+
+If the child is alive at the time of interview, then the variable B5==1, and the age at death is censored. 
+
+If the age at death is censored, then the age at the date of interview (censored age at death) is the date of the interview - date of birth (in months). 
+
+If the child is dead at the time of interview,then the variable B5!=1, then the age at death in months is the variable B7. Here we code this:
+
+```{r}
+model.dat$death.age<-ifelse(model.dat$b5==1,
+                          ((((model.dat$v008))+1900)-(((model.dat$b3))+1900)) 
+                          ,model.dat$b7)
+
+#censoring indicator for death by age 1, in months (12 months)
+model.dat$d.event<-ifelse(is.na(model.dat$b7)==T|model.dat$b7>12,0,1)
+model.dat$d.eventfac<-factor(model.dat$d.event); levels(model.dat$d.eventfac)<-c("Alive at 1", "Dead by 1")
+table(model.dat$d.eventfac)
+
+```
+
+### Compairing Two Groups
+We will now test for differences in survival by characteristics of the household. First we will examine whether the survival chances are the same for children in relatively high ses (in material terms) households, compared to those in relatively low-ses households.
+
+This is the equvalent of doing a t-test, or Mann-Whitney U test for differences between two groups. 
+
+```{r}
+library(survminer)
+model.dat$highses<-Recode(model.dat$v190, recodes ="1:3 = 0; 4:5=1; else=NA")
+fit1<-survfit(Surv(death.age, d.event)~highses, data=model.dat)
+fit1
+
+ggsurvplot(fit1, xlim=c(0,12), conf.int=T, title="Survival Function for Infant Mortality - Low vs. High SES Households", ylim=c(.8, 1))
+
+summary(fit1)
+
+```
+
+Gives us the basic survival plot. 
+
+Next we will use `survtest()` to test for differences between the two or more groups. The `survdiff()` function performs the log-rank test to compare the survival patterns of two or more groups.
+
+```{r}
+#two group compairison
+survdiff(Surv(death.age, d.event)~highses, data=model.dat)
+
+```
+
+In this case, we see no difference in survival status based on household SES. 
+
+How about rural vs urban residence?
+
+```{r}
+library(dplyr)
+library(car)
+model.dat<-model.dat%>%
+  mutate(rural = car::Recode(v025, recodes ="2 = '0rural'; 1='1urban'; else=NA", as.factor = T))
+
+
+fit2<-survfit(Surv(death.age, d.event)~rural, data=model.dat, conf.type = "log")
+fit2
+summary(fit2)
+
+ggsurvplot(fit2, xlim=c(0,12), ylim=c(.8, 1), conf.int=T, title="Survival Function for Infant mortality - Rural vs Urban Residence")
+```
+
+
+
+# Two- sample test
+
+```{r}
+survdiff(Surv(death.age, d.event)~rural, data=model.dat)
+
+prop.table(table(model.dat$d.event, model.dat$rural), margin = 2)
+chisq.test(table(model.dat$d.event, model.dat$rural))
+```
+Which shows a statistically significant difference in survival between rural and urban children, with rural children showing lower survivorship at all ages. 
+
+
+We can also compare the 95% survival point for rural and urban residents
+```{r}
+quantile(fit2, probs=.05)
+
+```
+
+
+We can also calculate the hazard function for each group using the `kphaz.fit` function in the `muhaz` library.
+
+```{r}
+haz2<-kphaz.fit(model.dat$death.age, model.dat$d.event, model.dat$rural)
+haz2
+plot(y=haz2$haz[1:12], x=haz2$time[1:12], col=1, lty=1, type="s")
+lines(y=haz2$haz[13:24], x=haz2$time[13:24], col=2, lty=1, type="s")
+
+```
+
+ This may be suggestive that children in urban areas may live in poorer environmental conditions.
+
+### k- sample test
+Next we illustrate a k-sample test. This would be the equivalent of the ANOVA if we were doing ordinary linear models. 
+
+In this example, I use the `v024` variable, which corresponds to the region of residence in this data. Effectively we are testing for differences in risk of infant mortality by region.
+
+```{r}
+
+table(model.dat$v024, model.dat$d.eventfac)
+
+fit3<-survfit(Surv(death.age, d.event)~v024, data=model.dat)
+fit3
+#summary(fit3)
+#quantile(fit3, probs=.05)
+
+ggsurvplot(fit3,conf.int = T, risk.table = F, title = "Survivorship Function for Infant Mortality", xlab = "Time in Months", xlim = c(0,12), ylim=c(.8, 1))
+
+survdiff(Surv(death.age, d.event)~v024, data=model.dat)
+
+```
+Which shows significant variation in survival between regions. The biggest difference we see is between region 3 green) and region 1 (black line) groups.
+
+Lastly, we examine comparing survival across multiple variables, in this case the education of the mother (`secedu`) and the rural/urban residence `rural`:
+
+```{r}
+
+model.dat<-model.dat%>%
+  mutate(secedu=Recode(v106, recodes ="2:3 = 1; 0:1=0; else=NA"))
+
+table(model.dat$secedu, model.dat$d.eventfac)
+
+fit4<-survfit(Surv(death.age, d.event)~rural+secedu, data=model.dat)
+#summary(fit4)
+ggsurvplot(fit4,conf.int = T, risk.table = F, title = "Survivorship Function for Infant Mortality", xlab = "Time in Months", xlim = c(0,12), ylim=c(.8, 1))
+
+#plot(fit4, ylim=c(.85,1), xlim=c(0,12), col=c(1,1,2,2),lty=c(1,2,1,2), conf.int=F)
+#title(main="Survival Function for Infant Mortality", sub="Rural/Urban * Mother's Education")
+#legend("topright", legend = c("Urban, Low Edu","Urban High Edu     ", "Rural, Low Edu","Rural High Edu     " ), col=c(1,1,2,2),lty=c(1,2,1,2))
+
+# test
+survdiff(Surv(death.age, d.event)~rural+secedu, data=model.dat)
+
+```
+
+Which shows a marginally significant difference between at *least* two of the groups, in this case, I would say that it's most likely finding differences between the Urban, low Education and the Rural low education, because there have the higher ratio of observed vs expected.
+
+
+# Survival analysis using survey design
+
+This example will cover the use of R functions for analyzing complex survey data. Most social and health surveys are not simple random samples of the population, but instead consist of respondents from a complex survey design. These designs often stratify the population based on one or more characteristics, including geography, race, age, etc. In addition the designs can be multi-stage, meaning that initial strata are created, then respondents are sampled from smaller units within those strata. An example would be if a school district was chosen as a sample strata, and then schools were then chosen as the primary sampling units (PSUs) within the district. From this 2 stage design, we could further sample classrooms within the school (3 stage design) or simply sample students (or whatever our unit of interest is). 
+
+A second feature of survey data we often want to account for is differential respondent weighting. This means that each respondent is given a weight to represent how common that particular respondent is within the population. This reflects the differenital probability of sampling based on respondent characteristics. As demographers, we are also often interested in making inference for the population, not just the sample, so our results must be generalizable to the population at large. Sample weights are used in the process as well.
+
+When such data are analyzed, we must take into account this nesting structure (sample design) as well as the respondent sample weight in order to make valid estimates of **ANY** statistical parameter. If we do not account for design, the parameter standard errors will be incorrect, and if we do not account for weighting, the parameters themselves will be incorrect and biased. 
+
+In general there are typically three things we need to find in our survey data codebooks: The sample strata identifier, the sample primary sampling unit identifier (often called a cluster identifier) and the respondent survey weight.   These will typically have one of these names and should be easily identifiable in the codebook. 
+
+Statistical software will have special routines for analyzing these types of data and you must be aware that the diversity of statistical routines that generally exists will be lower for analyzing complex survey data, and some forms of analysis *may not be available!*
+
+
+In the DHS [Recode manual](http://dhsprogram.com/pubs/pdf/DHSG4/Recode6_DHS_22March2013_DHSG4.pdf), the sampling information for the data is found in variables `v021` and `v022`, which are the primary sampling unit (PSU) and sample strata, respectively. The person weight is found in variable `v005`, and following DHS protocol, this has six implied decimal places, so we must divide it by 1000000, again, following the DHS manual.
+
+```{r}
+library(survey)
+model.dat$wt<-model.dat$v005/1000000
+
+#create the design: ids == PSU, strata==strata, weights==weights.
+options(survey.lonely.psu = "adjust")
+des<-svydesign(ids=~v021, strata = ~v022, weights=~wt, data=model.dat)
+
+fit.s<-svykm(Surv(death.age, d.event)~rural, design=des, se=T)
+
+#use svyby to find the %of infants that die before age 1, by rural/urban status
+svyby(~d.event, ~rural, des, svymean)
+```
+
+
+The plotting is a bit more of a challenge, as the survey version of the function isn't as nice
+```{r}
+plot(fit.s[[2]], ylim=c(.8,1), xlim=c(0,12),col=1, ci=F )
+lines(fit.s[[1]], col=2) 
+title(main="Survival Function for Infant Mortality", sub="Rural vs Urban Residence")
+legend("topright", legend = c("Urban","Rural" ), col=c(1,2), lty=1)
+
+#test statistic
+svylogrank(Surv(death.age, d.event)~rural, design=des)
+```
+
+And we see the p-value is larger than assuming random sampling. 
+
+
