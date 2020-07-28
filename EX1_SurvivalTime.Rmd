@@ -1,0 +1,104 @@
+---
+title: "Event History Analysis - Example 1 Functions of Survival Time"
+author: "coreysparks"
+date: "January 20, 2015"
+output: html_document
+---
+
+This example will illustrate how to construct a basic survival function from individual-level data. The example will use as its outcome variable, the event of a child dying before age 1. The data for this example come from the honduran [Demographic and Health Survey for 2011-12](http://dhsprogram.com/what-we-do/survey/survey-display-369.cfm) children's recode file. This file contains information for all births to the sample of women between the ages of 15 and 49 in the last 5 years prior to the survey.
+
+
+```{r}
+#Example 1
+library(foreign)
+library(survival)
+library(lattice)
+
+
+honduras<-read.dta("/Users/ozd504/Google Drive/dem7223/class2016/data/HNKR62DT/HNKR62FL.DTA", convert.factors = F)
+```
+
+
+##Event - Infant Mortality
+In the DHS, they record if a child is dead or alive and the age at death if the child is dead. This can be understood using a series of variables about each child. 
+
+If the child is alive at the time of interview, then the variable B5==1, and the age at death is censored. 
+
+If the age at death is censored, then the age at the date of interview (censored age at death) is the date of the interview - date of birth (in months). 
+
+If the child is dead at the time of interview,then the variable B5!=1, then the age at death in months is the variable B7. Here we code this:
+
+```{r}
+honduras$death.age<-ifelse(honduras$b5==1,
+                          ((((honduras$v008))+1900)-(((honduras$b3))+1900)) 
+                          ,honduras$b7)
+
+#censoring indicator for death by age 1, in months (12 months)
+honduras$d.event<-ifelse(is.na(honduras$b7)==T|honduras$b7>12,0,1)
+honduras$d.eventfac<-factor(honduras$d.event); levels(honduras$d.eventfac)<-c("Alive at 1", "Dead by 1")
+table(honduras$d.eventfac)
+
+```
+
+We see `r table(honduras$d.eventfac)[2]` infant deaths among the `r dim(honduras)[1]` births in the last 5 years.
+
+##Example of Estimating Survival Time Functions from data##
+To generate a basic life table, we use the `survfit()` procedure in the `survival` library. The data for this is a `Surv()` object, which typically has 2 arguments, the duration, and the censoring indicator. This uses age at death (the `death.age` variable from above) for children dying before age 1 as the outcome, and the `d.event` variable from above as the censoring indicator.
+
+```{r}
+#Here we see the data
+head(honduras[,c("death.age","d.event")], n=20)
+
+#The Surv() object
+head(Surv(honduras$death.age, honduras$d.event), n=20)
+```
+
+In the first 20 cases from the data, the 15th child died when it was 6 months old, while all the other children had not experienced the event (they were still alive at age 12 months), these have a + after their censored age at death.
+
+```{r, fig.height=7, fig.width=8}
+mort<-survfit(Surv(death.age, d.event)~1, data=honduras,conf.type="none")
+plot(mort, ylim=c(.9,1), xlim=c(0,12), main="Survival Function for Infant Mortality")
+summary(mort)
+```
+
+This is the so-called Kaplan-Meier estimate of the survival function. At each month, we see the number of children at risk and the number dying. We see the highest number of deaths occurred between 0 and 1 month, which is not surprising.
+
+The estimate is that the infant morality rate is `r 1000*(1-summary(mort)$surv[12])`, I get this by doing `1000*(1-summary(mort)$surv[12])`. The  [Worldbank](http://data.worldbank.org/indicator/SP.DYN.IMRT.IN?locations=HN&view=chart) lists the 2011 IMR for honduras as 19.9/1000, which is remarkably close to our estimate of `r 1000*(1-summary(mort)$surv[12])` per thousand.
+
+We can likewise get an estimate of the hazard function using the Kaplan-Meier method as well, using the `muhaz` library.
+
+```{r, fig.height=7, fig.width=8}
+library(muhaz)
+haz<-kphaz.fit(time=honduras$death.age, status=honduras$d.event, method = "product-limit")
+kphaz.plot(haz, main="Hazard function plot")
+data.frame(haz)
+```
+
+Now we have our S(t) and h(t) functions. We can derive the other functions of survival time from these but integrating (summing) and differentiating these functions. 
+
+```{r, fig.height=7, fig.width=8}
+#cumulative hazard
+plot(cumsum(haz$haz)~haz$time, 
+     main = "Cumulative Hazard function",
+     ylab="H(t)",xlab="Time in Months", 
+     type="l",xlim=c(0,12), lwd=2,col=3)
+
+#Survival function, I just store this in an object so I can use it
+surv<-mort
+
+#here is a cheap version of the pdf
+ft<- -diff(mort$surv)
+plot(ft, xlim=c(.5,11.5), 
+     type="s",
+     ylab="f(t)",xlab="Time in Months",
+     main="Probability Density Function")
+
+#here is the cumulative distribution function
+Ft<-cumsum(ft)
+plot(Ft, xlim=c(0.5,12), type="s", ylab="F(t)",xlab="Time in Months", main="Cumulative Distribution Function")
+  
+```
+
+So in this example, we calculated the censored ages at death for children under age 1, we estimated the survival function, hazard and Cumulative hazard functions, and the associated pdf and cdf's.
+
+
