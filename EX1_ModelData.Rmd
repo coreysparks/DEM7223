@@ -1,8 +1,10 @@
 ---
 title: "Event History Analysis - Example 1 Functions of Survival Time"
-author: "coreysparks"
-date: july 28, 2020
-output: html_document
+author: "Corey S. Sparks, Ph.D."
+date: July 28, 2020
+output: 
+  html_document:
+    keep_md: true
 ---
 
 This example will illustrate how to construct a basic survival function from individual-level data. The example will use as its outcome variable, the event of a child dying before age 1. The data for this example come from the  [Demographic and Health Survey Model Data Files](http://dhsprogram.com/data/Download-Model-Datasets.cfm?flag=1) children's recode file. 

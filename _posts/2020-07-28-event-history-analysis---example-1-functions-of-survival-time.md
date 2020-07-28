@@ -1,8 +1,8 @@
 ---
 title: "Event History Analysis - Example 1 Functions of Survival Time"
 
-author: "coreysparks"
-date: "july 28, 2020"
+author: "Corey S. Sparks, Ph.D."
+date: "July 28, 2020"
 layout: post
 ---
 

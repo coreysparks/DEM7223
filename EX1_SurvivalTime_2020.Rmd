@@ -2,9 +2,9 @@
 title: "DEM 7223 - Event History Analysis - Example 1 Functions of Survival Time"
 author: "Corey S. Sparks, PhD"
 date: "September 3, 2019"
-output:
-   html_document:
-    df_print: paged
+output: 
+  html_document:
+    keep_md: true    
     fig_height: 7
     fig_width: 7
     toc: yes
