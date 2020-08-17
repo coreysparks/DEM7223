@@ -1,24 +1,16 @@
 ---
 title: "DEM 7223 - Introduction to Event History Analysis and Functions of Survival Time"
-author: 
-  - name: "[Corey S. Sparks, PhD](https://coreysparks.github.io)"
-    affiliation: "[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+author: "Corey S. Sparks, Ph.D."
+date: "17 August, 2020"
 output: 
   html_document:
-    df_print: paged
-    fig_height: 7
-    fig_width: 7
-    toc: true
-    toc_float: true
+    toc: yes
+    includes:
+    in_header: logo.html
+    keep_md: true
 ---
 
-```{r, echo=FALSE, message=FALSE}
-library(knitr)
-library(kableExtra)
-library(dplyr)
 
-```
 
 # Rational for Event history analysis
 
@@ -135,7 +127,8 @@ library(dplyr)
 ### Counting process data
 * This is what we are accustomed to in the life table
 
-```{r}
+
+```r
 t1<-data.frame(Time_start=c(1,2,3,4),
                Time_end=c(2,3,4,5),
                Failing=c(25,15,12,20),
@@ -144,12 +137,53 @@ t1%>%
   kable()%>%
   column_spec(1:4, border_left = T, border_right = T)%>%
   kable_styling()
+```
+
+<table class="table" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:right;"> Time_start </th>
+   <th style="text-align:right;"> Time_end </th>
+   <th style="text-align:right;"> Failing </th>
+   <th style="text-align:right;"> At_Risk </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 2 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 25 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 100 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 2 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 15 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 75 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 12 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 60 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 5 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 20 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 40 </td>
+  </tr>
+</tbody>
+</table>
+
+```r
 #knitr::kable(t1,format = "html", caption = "Counting Process data" ,align = "c", )
 ```
 ### Case - duration, or person level data
 * This is the general form of continuous time survival data.
 
-```{r}
+
+```r
 t2<-data.frame(ID = c(1,2,3,4),
                Duration=c(5, 2, 9 , 6), 
                Event_Occurred=c("Yes (1)","Yes (1)","No (0)", "Yes (1)" ))
@@ -157,6 +191,41 @@ t2%>%
   kable()%>%
   column_spec(1:3, border_left = T, border_right = T)%>%
   kable_styling(row_label_position = "c", position = "center" )
+```
+
+<table class="table" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:right;"> ID </th>
+   <th style="text-align:right;"> Duration </th>
+   <th style="text-align:left;"> Event_Occurred </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 5 </td>
+   <td style="text-align:left;border-left:1px solid;border-right:1px solid;"> Yes (1) </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 2 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 2 </td>
+   <td style="text-align:left;border-left:1px solid;border-right:1px solid;"> Yes (1) </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 9 </td>
+   <td style="text-align:left;border-left:1px solid;border-right:1px solid;"> No (0) </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 6 </td>
+   <td style="text-align:left;border-left:1px solid;border-right:1px solid;"> Yes (1) </td>
+  </tr>
+</tbody>
+</table>
+
+```r
 #knitr::kable(t2, format = "html", caption = "Case-duration data", align = "c")
 ```
 
@@ -165,7 +234,8 @@ This can be transformed into person-period data, or discrete time data.
 ### Person – Period data
 * Express exposure as discrete periods
 * Event occurrence is coded at each period
-```{r}
+
+```r
 t3<-data.frame(ID=c(rep(1, 5), rep(2, 2), rep(3, 9), rep(4, 6)),
                     Period = c(seq(1:5), seq(1:2), seq(1:9), seq(1:6)),
                     Event=c(0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
@@ -174,6 +244,128 @@ t3%>%
   column_spec(1:3, border_left = T, border_right = T)%>%
   kable_styling(row_label_position = "c", position = "center" )
 ```
+
+<table class="table" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:right;"> ID </th>
+   <th style="text-align:right;"> Period </th>
+   <th style="text-align:right;"> Event </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 2 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 5 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 2 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 2 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 2 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 2 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 5 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 6 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 7 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 8 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 9 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 1 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 2 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 3 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 5 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 4 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 6 </td>
+   <td style="text-align:right;border-left:1px solid;border-right:1px solid;"> 0 </td>
+  </tr>
+</tbody>
+</table>
 
 # Functions of Survival Time
 ### From the life table
@@ -192,15 +384,23 @@ These times are subject to random variations, and are considered to be random *i
 * The hazard function, $h(t)$
 
 ![3 functions](images/functions.png)
-```{r}
+
+```r
 Ft<-cumsum(dlnorm(x = seq(0, 110, 1), meanlog = 4.317488, sdlog = 2.5)) #mean of 75 years, sd of 12.1 years
 ft<-diff(Ft)
 St<-1-Ft
 ht<-ft/St[1:110]
 plot(Ft, ylim=c(0,1))
 lines(St, col="red")
+```
+
+![](EX1_ModelData_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+```r
 plot(ht, col="green")
 ```
+
+![](EX1_ModelData_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
 
 * These three are mathematically related, and if given one, we can calculate the others
   + These 3 functions each represent a different aspect of the survival time distribution.  
@@ -244,17 +444,15 @@ As time passes, *S(t)* decreases, and is called a *strictly decreasing function 
 
 Empirically, *S(t)* takes the form of a step function:
 
-```{r}
+
+```r
 St<- c(1, cumprod(1-(t1$Failing/t1$At_Risk)))
 
 plot(St, type="s", xlab = "Time", ylab="S(t)", ylim=c(0,1))
-
 ```
-```{r, echo=FALSE, eval=FALSE}
-ht<-t1$Failing/t1$At_Risk
-plot(ht, type="s", xlab = "Time", ylab="h(t)", ylim=c(0,1))
 
-```
+![](EX1_ModelData_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
 
 
 
@@ -328,7 +526,8 @@ The DHS Program has created example datasets for users to practice with. These d
 This file contains information for all births to the sample of women between the ages of 15 and 49 in the last 5 years prior to the survey.
 
 
-```{r}
+
+```r
 #Example 1
 library(haven)
 library(survival)
@@ -346,7 +545,8 @@ If the age at death is censored, then the age at the date of interview (censored
 
 If the child is dead at the time of interview,then the variable B5!=1, then the age at death in months is the variable B7. Here we code this:
 
-```{r}
+
+```r
 model.dat$death.age<-ifelse(model.dat$b5==1,
                           ((((model.dat$v008))+1900)-(((model.dat$b3))+1900)) 
                           ,model.dat$b7)
@@ -355,54 +555,146 @@ model.dat$death.age<-ifelse(model.dat$b5==1,
 model.dat$d.event<-ifelse(is.na(model.dat$b7)==T|model.dat$b7>12,0,1)
 model.dat$d.eventfac<-factor(model.dat$d.event); levels(model.dat$d.eventfac)<-c("Alive at 1", "Dead by 1")
 table(model.dat$d.eventfac)
-
 ```
 
-We see `r table(model.dat$d.eventfac)[2]` infant deaths among the `r dim(model.dat)[1]` births in the last 5 years.
+```
+## 
+## Alive at 1  Dead by 1 
+##       5434        534
+```
+
+We see 534 infant deaths among the 5968 births in the last 5 years.
 
 ## Example of Estimating Survival Time Functions from data##
 To generate a basic life table, we use the `survfit()` procedure in the `survival` library. The data for this is a `Surv()` object, which typically has 2 arguments, the duration, and the censoring indicator. This uses age at death (the `death.age` variable from above) for children dying before age 1 as the outcome, and the `d.event` variable from above as the censoring indicator.
 
-```{r}
+
+```r
 #Here we see the data
 head(model.dat[,c("death.age","d.event")], n=20)
+```
 
+```
+## # A tibble: 20 x 2
+##    death.age d.event
+##        <dbl>   <dbl>
+##  1         5       0
+##  2        37       0
+##  3        30       0
+##  4        10       0
+##  5        30       0
+##  6         0       1
+##  7        34       0
+##  8         1       1
+##  9        18       0
+## 10         3       1
+## 11        27       0
+## 12        24       0
+## 13        12       0
+## 14         9       0
+## 15         5       1
+## 16        54       0
+## 17        16       0
+## 18        37       0
+## 19        30       0
+## 20         0       0
+```
+
+```r
 #The Surv() object
 head(Surv(model.dat$death.age, model.dat$d.event), n=20)
 ```
 
+```
+##  [1]  5+ 37+ 30+ 10+ 30+  0  34+  1  18+  3  27+ 24+ 12+  9+  5  54+ 16+ 37+ 30+
+## [20]  0+
+```
+
 In the first 20 cases from the data, several children died (no `+` after the time), while all the other children had not experienced the event (they were still alive at age 12 months), these have a `+` after their censored age at death.
 
-```{r, fig.height=7, fig.width=8}
+
+```r
 mort<-survfit(Surv(death.age, d.event)~1, data=model.dat,conf.type="none")
 plot(mort, ylim=c(.9,1), xlim=c(0,12), main="Survival Function for Infant Mortality")
+```
+
+![](EX1_ModelData_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+```r
 summary(mort)
+```
+
+```
+## Call: survfit(formula = Surv(death.age, d.event) ~ 1, data = model.dat, 
+##     conf.type = "none")
+## 
+##  time n.risk n.event survival std.err
+##     0   5968     209    0.965 0.00238
+##     1   5690      26    0.961 0.00252
+##     2   5573      37    0.954 0.00271
+##     3   5423      38    0.948 0.00290
+##     4   5282      25    0.943 0.00302
+##     5   5161      22    0.939 0.00313
+##     6   5021      26    0.934 0.00326
+##     7   4880      18    0.931 0.00334
+##     8   4755      26    0.926 0.00347
+##     9   4621      23    0.921 0.00359
+##    10   4507       5    0.920 0.00361
+##    11   4405      13    0.917 0.00368
+##    12   4303      66    0.903 0.00401
 ```
 
 This is the so-called Kaplan-Meier estimate of the survival function. At each month, we see the number of children at risk and the number dying. We see the highest number of deaths occurred between 0 and 1 month, which is not surprising.
 
-The estimate is that the infant morality rate is `r 1000*(1-summary(mort)$surv[12])`, I get this by doing `1000*(1-summary(mort)$surv[12])`. 
+The estimate is that the infant morality rate is 82.7382814, I get this by doing `1000*(1-summary(mort)$surv[12])`. 
 
 We can likewise get an estimate of the hazard function using the Kaplan-Meier method as well, using the `muhaz` library.
 
-```{r, fig.height=7, fig.width=8}
+
+```r
 library(muhaz)
 haz<-kphaz.fit(time=model.dat$death.age, status=model.dat$d.event, method = "product-limit")
 kphaz.plot(haz, main="Hazard function plot")
+```
+
+![](EX1_ModelData_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+```r
 data.frame(haz)
+```
+
+```
+##    time         haz          var
+## 1   0.5 0.004617002 8.198994e-07
+## 2   1.5 0.006722906 1.221621e-06
+## 3   2.5 0.007109508 1.330224e-06
+## 4   3.5 0.004784710 9.157877e-07
+## 5   4.5 0.004326655 8.509621e-07
+## 6   5.5 0.005244306 1.057883e-06
+## 7   6.5 0.003732925 7.741945e-07
+## 8   7.5 0.005545073 1.182716e-06
+## 9   8.5 0.005037790 1.103514e-06
+## 10  9.5 0.001118111 2.500496e-07
+## 11 10.5 0.002993934 6.895473e-07
+## 12 11.5 0.015646925 3.709910e-06
 ```
 
 This illustrates, that while the largest drop in survivorship occurred between 0 and 1, the hazard is actually higher in the 1-3 month range, illustrating the conditionality of that probability. There is also a large jump in risk at age 1, which may indicate something about age-heaping in the data.
 
 Now we have our S(t) and h(t) functions. We can derive the other functions of survival time from these but integrating (summing) and differentiating these functions. 
 
-```{r, fig.height=7, fig.width=8}
+
+```r
 #cumulative hazard
 plot(cumsum(haz$haz)~haz$time, 
      main = "Cumulative Hazard function",
      ylab="H(t)",xlab="Time in Months", 
      type="l",xlim=c(0,12), lwd=2,col=3)
+```
 
+![](EX1_ModelData_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
+```r
 #Survival function, I just store this in an object so I can use it
 surv<-mort
 
@@ -412,12 +704,17 @@ plot(ft, xlim=c(.5,11.5),
      type="s",
      ylab="f(t)",xlab="Time in Months",
      main="Probability Density Function")
+```
 
+![](EX1_ModelData_files/figure-html/unnamed-chunk-13-2.png)<!-- -->
+
+```r
 #here is the cumulative distribution function
 Ft<-cumsum(ft)
 plot(Ft, xlim=c(0.5,12), type="s", ylab="F(t)",xlab="Time in Months", main="Cumulative Distribution Function")
-  
 ```
+
+![](EX1_ModelData_files/figure-html/unnamed-chunk-13-3.png)<!-- -->
 
 So in this example, we calculated the censored ages at death for children under age 1, we estimated the survival function, hazard and Cumulative hazard functions, and the associated pdf and cdf's.
 
