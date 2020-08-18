@@ -3,7 +3,7 @@ title: "DEM 7223 - Introduction to Event History Analysis and Functions of Survi
 author: 
   - name: "[Corey S. Sparks, PhD](https://coreysparks.github.io)"
     affiliation: "[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
   html_document:
     df_print: paged

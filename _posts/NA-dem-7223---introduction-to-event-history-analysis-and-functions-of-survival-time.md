@@ -1,138 +1,12 @@
-<!DOCTYPE html>
+---
+title: "DEM 7223 - Introduction to Event History Analysis and Functions of Survival Time"
 
-<html>
+author: "list(name = "[Corey S. Sparks, PhD](https://coreysparks.github.io)", affiliation = "[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)")"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+layout: post
+---
 
-<head>
-
-<meta charset="utf-8" />
-<meta name="generator" content="pandoc" />
-<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
-
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-
-
-<meta name="date" content="2020-08-18" />
-
-<title>DEM 7223 - Introduction to Event History Analysis and Functions of Survival Time</title>
-
-<script src="EX1_ModelData_files/kePrint-0.0.1/kePrint.js"></script>
-
-
-<style type="text/css">code{white-space: pre;}</style>
-<style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
-}
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {  }
-@media screen {
-a.sourceLine::before { text-decoration: underline; }
-}
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-
-/* A workaround for https://github.com/jgm/pandoc/issues/4278 */
-a.sourceLine {
-  pointer-events: auto;
-}
-
-</style>
-<script>
-// apply pandoc div.sourceCode style to pre.sourceCode instead
-(function() {
-  var sheets = document.styleSheets;
-  for (var i = 0; i < sheets.length; i++) {
-    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
-    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
-      var rule = rules[j];
-      // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
-      var style = rule.style.cssText;
-      // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
-      // replace div.sourceCode by a pre.sourceCode rule
-      sheets[i].deleteRule(j);
-      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
-    }
-  }
-})();
-</script>
-
-
-
-<link rel="stylesheet" href="EX1_ModelData_files/style.css" type="text/css" />
-
-
-
-
-
-</head>
-
-<body>
-
-
-
-
-<section class="page-header">
-<h1 class="title toc-ignore project-name">DEM 7223 - Introduction to Event History Analysis and Functions of Survival Time</h1>
-<h4 class="author project-author"><a href="https://coreysparks.github.io">Corey S. Sparks, PhD</a></h4>
-<address class="author_afil">
-<a href="https://hcap.utsa.edu/demography">The University of Texas at San Antonio</a><br><h4 class="date project-date">August 18, 2020</h4>
-</section>
-
-
+<script src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX1_ModelData_files/kePrint-0.0.1/kePrint.js"></script>
 
 <section class="main-content">
 <div id="rational-for-event-history-analysis" class="section level1">
@@ -192,7 +66,7 @@ a.sourceLine {
 </ul></li>
 </ul>
 <div class="figure">
-<img src="images/censoring.png" alt="Censoring" />
+<img src="{{ site.url }}{{ site.baseurl }}/images/censoring.png" alt="Censoring" />
 <p class="caption">Censoring</p>
 </div>
 </div>
@@ -771,7 +645,7 @@ Event
 <li>The hazard function, <span class="math inline">\(h(t)\)</span></li>
 </ul>
 <div class="figure">
-<img src="images/functions.png" alt="3 functions" />
+<img src="{{ site.url }}{{ site.baseurl }}/images/functions.png" alt="3 functions" />
 <p class="caption">3 functions</p>
 </div>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">Ft&lt;-<span class="kw">cumsum</span>(<span class="kw">dlnorm</span>(<span class="dt">x =</span> <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">110</span>, <span class="dv">1</span>), <span class="dt">meanlog =</span> <span class="fl">4.317488</span>, <span class="dt">sdlog =</span> <span class="fl">2.5</span>)) <span class="co">#mean of 75 years, sd of 12.1 years</span></a>
@@ -780,9 +654,9 @@ Event
 <a class="sourceLine" id="cb6-4" title="4">ht&lt;-ft<span class="op">/</span>St[<span class="dv">1</span><span class="op">:</span><span class="dv">110</span>]</a>
 <a class="sourceLine" id="cb6-5" title="5"><span class="kw">plot</span>(Ft, <span class="dt">ylim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">1</span>))</a>
 <a class="sourceLine" id="cb6-6" title="6"><span class="kw">lines</span>(St, <span class="dt">col=</span><span class="st">&quot;red&quot;</span>)</a></code></pre></div>
-<p><img src="EX1_ModelData_files/figure-html/unnamed-chunk-5-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX1_ModelData_files/figure-html/unnamed-chunk-5-1.png" /><!-- --></p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw">plot</span>(ht, <span class="dt">col=</span><span class="st">&quot;green&quot;</span>)</a></code></pre></div>
-<p><img src="EX1_ModelData_files/figure-html/unnamed-chunk-5-2.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX1_ModelData_files/figure-html/unnamed-chunk-5-2.png" /><!-- --></p>
 <ul>
 <li>These three are mathematically related, and if given one, we can calculate the others
 <ul>
@@ -817,7 +691,7 @@ Event
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">St&lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="kw">cumprod</span>(<span class="dv">1</span><span class="op">-</span>(t1<span class="op">$</span>Failing<span class="op">/</span>t1<span class="op">$</span>At_Risk)))</a>
 <a class="sourceLine" id="cb8-2" title="2"></a>
 <a class="sourceLine" id="cb8-3" title="3"><span class="kw">plot</span>(St, <span class="dt">type=</span><span class="st">&quot;s&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;Time&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;S(t)&quot;</span>, <span class="dt">ylim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">1</span>))</a></code></pre></div>
-<p><img src="EX1_ModelData_files/figure-html/unnamed-chunk-6-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX1_ModelData_files/figure-html/unnamed-chunk-6-1.png" /><!-- --></p>
 </div>
 <div id="the-hazard-function" class="section level3">
 <h3>The hazard function</h3>
@@ -924,7 +798,7 @@ Event
 <p>In the first 20 cases from the data, several children died (no <code>+</code> after the time), while all the other children had not experienced the event (they were still alive at age 12 months), these have a <code>+</code> after their censored age at death.</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">mort&lt;-<span class="kw">survfit</span>(<span class="kw">Surv</span>(death.age, d.event)<span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>model.dat,<span class="dt">conf.type=</span><span class="st">&quot;none&quot;</span>)</a>
 <a class="sourceLine" id="cb16-2" title="2"><span class="kw">plot</span>(mort, <span class="dt">ylim=</span><span class="kw">c</span>(.<span class="dv">9</span>,<span class="dv">1</span>), <span class="dt">xlim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">12</span>), <span class="dt">main=</span><span class="st">&quot;Survival Function for Infant Mortality&quot;</span>)</a></code></pre></div>
-<p><img src="EX1_ModelData_files/figure-html/unnamed-chunk-11-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX1_ModelData_files/figure-html/unnamed-chunk-11-1.png" /><!-- --></p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="kw">summary</span>(mort)</a></code></pre></div>
 <pre><code>## Call: survfit(formula = Surv(death.age, d.event) ~ 1, data = model.dat, 
 ##     conf.type = &quot;none&quot;)
@@ -949,7 +823,7 @@ Event
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" title="1"><span class="kw">library</span>(muhaz)</a>
 <a class="sourceLine" id="cb19-2" title="2">haz&lt;-<span class="kw">kphaz.fit</span>(<span class="dt">time=</span>model.dat<span class="op">$</span>death.age, <span class="dt">status=</span>model.dat<span class="op">$</span>d.event, <span class="dt">method =</span> <span class="st">&quot;product-limit&quot;</span>)</a>
 <a class="sourceLine" id="cb19-3" title="3"><span class="kw">kphaz.plot</span>(haz, <span class="dt">main=</span><span class="st">&quot;Hazard function plot&quot;</span>)</a></code></pre></div>
-<p><img src="EX1_ModelData_files/figure-html/unnamed-chunk-12-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX1_ModelData_files/figure-html/unnamed-chunk-12-1.png" /><!-- --></p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" title="1"><span class="kw">data.frame</span>(haz)</a></code></pre></div>
 <pre><code>##    time         haz          var
 ## 1   0.5 0.004617002 8.198994e-07
@@ -971,7 +845,7 @@ Event
 <a class="sourceLine" id="cb22-3" title="3">     <span class="dt">main =</span> <span class="st">&quot;Cumulative Hazard function&quot;</span>,</a>
 <a class="sourceLine" id="cb22-4" title="4">     <span class="dt">ylab=</span><span class="st">&quot;H(t)&quot;</span>,<span class="dt">xlab=</span><span class="st">&quot;Time in Months&quot;</span>, </a>
 <a class="sourceLine" id="cb22-5" title="5">     <span class="dt">type=</span><span class="st">&quot;l&quot;</span>,<span class="dt">xlim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">12</span>), <span class="dt">lwd=</span><span class="dv">2</span>,<span class="dt">col=</span><span class="dv">3</span>)</a></code></pre></div>
-<p><img src="EX1_ModelData_files/figure-html/unnamed-chunk-13-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX1_ModelData_files/figure-html/unnamed-chunk-13-1.png" /><!-- --></p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" title="1"><span class="co">#Survival function, I just store this in an object so I can use it</span></a>
 <a class="sourceLine" id="cb23-2" title="2">surv&lt;-mort</a>
 <a class="sourceLine" id="cb23-3" title="3"></a>
@@ -981,30 +855,12 @@ Event
 <a class="sourceLine" id="cb23-7" title="7">     <span class="dt">type=</span><span class="st">&quot;s&quot;</span>,</a>
 <a class="sourceLine" id="cb23-8" title="8">     <span class="dt">ylab=</span><span class="st">&quot;f(t)&quot;</span>,<span class="dt">xlab=</span><span class="st">&quot;Time in Months&quot;</span>,</a>
 <a class="sourceLine" id="cb23-9" title="9">     <span class="dt">main=</span><span class="st">&quot;Probability Density Function&quot;</span>)</a></code></pre></div>
-<p><img src="EX1_ModelData_files/figure-html/unnamed-chunk-13-2.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX1_ModelData_files/figure-html/unnamed-chunk-13-2.png" /><!-- --></p>
 <div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb24-1" title="1"><span class="co">#here is the cumulative distribution function</span></a>
 <a class="sourceLine" id="cb24-2" title="2">Ft&lt;-<span class="kw">cumsum</span>(ft)</a>
 <a class="sourceLine" id="cb24-3" title="3"><span class="kw">plot</span>(Ft, <span class="dt">xlim=</span><span class="kw">c</span>(<span class="fl">0.5</span>,<span class="dv">12</span>), <span class="dt">type=</span><span class="st">&quot;s&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;F(t)&quot;</span>,<span class="dt">xlab=</span><span class="st">&quot;Time in Months&quot;</span>, <span class="dt">main=</span><span class="st">&quot;Cumulative Distribution Function&quot;</span>)</a></code></pre></div>
-<p><img src="EX1_ModelData_files/figure-html/unnamed-chunk-13-3.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX1_ModelData_files/figure-html/unnamed-chunk-13-3.png" /><!-- --></p>
 <p>So in this example, we calculated the censored ages at death for children under age 1, we estimated the survival function, hazard and Cumulative hazard functions, and the associated pdf and cdf’s.</p>
 </div>
 </div>
 </section>
-
-
-
-<!-- code folding -->
-
-
-<!-- dynamically load mathjax for compatibility with self-contained -->
-<script>
-  (function () {
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
-    document.getElementsByTagName("head")[0].appendChild(script);
-  })();
-</script>
-
-</body>
-</html>
