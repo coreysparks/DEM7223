@@ -25,7 +25,7 @@ We can write this as
 
 $$\hat{S(t)} = (1-\hat{p(t_1)})(1-\hat{p(t_2)}) \dots (1-\hat{p(t_j)})$$
 
-Unlike the life-table and discrete time methods of estimating survival, which lumped time into discrete periods, K-M uses the information contained in the actual durations.
+Unlike the life-table and discrete time methods of estimating survival, which lumped time into discrete periods, K-M uses the information contained in the actual duration.
 
 Each K-M interval begins with a single event time, and ends just prior to the next event time.
 
@@ -82,8 +82,8 @@ The exact estimate of the K-M hazard function actually depends on the width of t
 $$\hat{h(t_j)} = \frac{\hat{p_{KM}(t_j)}}{\text{width}_j}$$
 and you can get this estimate from the `muhaz` library in R. 
 
-### Variance in the K-M Etimates
-Since the K-M survival function is a statistical estimate, it also has uncertainty to it. To measure the uncertainty, or variance in the estimate, the tradiational method is to use the Greenwood formula.
+### Variance in the K-M Estimates
+Since the K-M survival function is a statistical estimate, it also has uncertainty to it. To measure the uncertainty, or variance in the estimate, the traditional method is to use the Greenwood formula.
 
 $$\text{Var}(S(t)) = \hat{S(t)}^2 \sum_{t_i \leqslant t} \frac{d_i}{n_i(n_i-d_i)}$$
 and standard error equal to $s.e.(S(t))= \sqrt{\text{Var}(S(t))}$
@@ -126,7 +126,7 @@ This is the same process as doing a two sample test for a regular outcome, such 
 
 The first stop on our examination of between group comparison is the *inter-ocular traumatic test*
 
-You may not be familiar with this test, but in general, if you look at a plot, and if you think there's a difference, say between two lines, there ususally is, and many times the human eye is a more discerning test than anything.
+You may not be familiar with this test, but in general, if you look at a plot, and if you think there's a difference, say between two lines, there usually is, and many times the human eye is a more discerning test than anything.
 
 ```{r, echo=FALSE}
 x<-rnorm(100, mean=10, sd=1)
@@ -144,7 +144,7 @@ So, plot the survival curves, with confidence intervals, your eye can usually de
 
 Under traditional statistics thinking, if the confidence intervals of the two curves overlap for their entire lengths, then the two groups are equivalent, if the confidence interval for the curves do not overlap at ANY point along the curve, they are different, simple, no?
 
-The *statisical* way of doing this, beyond looking at things, is the realm of Mantel-Haenszel test. R implements this test for 2 or *k* groups using the `survdiff()` function. It uses the method of [Harrington and Fleming (1982)](https://www.jstor.org/stable/2335991) which can weight the difference in survival curves flexibly, giving more or less weight to earlier or later survival times. 
+The *statistical* way of doing this, beyond looking at things, is the realm of Mantel-Haenszel test. R implements this test for 2 or *k* groups using the `survdiff()` function. It uses the method of [Harrington and Fleming (1982)](https://www.jstor.org/stable/2335991) which can weight the difference in survival curves flexibly, giving more or less weight to earlier or later survival times. 
 
 The classic Mantel-Haneszel test is just a $\chi^2$ test for independence. 
 
@@ -206,10 +206,10 @@ table(model.dat$d.eventfac)
 
 ```
 
-### Compairing Two Groups
+### Comparing Two Groups
 We will now test for differences in survival by characteristics of the household. First we will examine whether the survival chances are the same for children in relatively high ses (in material terms) households, compared to those in relatively low-ses households.
 
-This is the equvalent of doing a t-test, or Mann-Whitney U test for differences between two groups. 
+This is the equivalent of doing a t-test, or Mann-Whitney U test for differences between two groups. 
 
 ```{r}
 library(survminer)
@@ -337,7 +337,7 @@ A second feature of survey data we often want to account for is differential res
 
 When such data are analyzed, we must take into account this nesting structure (sample design) as well as the respondent sample weight in order to make valid estimates of **ANY** statistical parameter. If we do not account for design, the parameter standard errors will be incorrect, and if we do not account for weighting, the parameters themselves will be incorrect and biased. 
 
-In general there are typically three things we need to find in our survey data codebooks: The sample strata identifier, the sample primary sampling unit identifier (often called a cluster identifier) and the respondent survey weight.   These will typically have one of these names and should be easily identifiable in the codebook. 
+In general there are typically three things we need to find in our survey data code books: The sample strata identifier, the sample primary sampling unit identifier (often called a cluster identifier) and the respondent survey weight.   These will typically have one of these names and should be easily identifiable in the code book. 
 
 Statistical software will have special routines for analyzing these types of data and you must be aware that the diversity of statistical routines that generally exists will be lower for analyzing complex survey data, and some forms of analysis *may not be available!*
 
