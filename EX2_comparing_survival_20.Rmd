@@ -1,21 +1,172 @@
 ---
 title: "DEM 7223 - Event History Analysis - Comparing Survival Times Between Groups"
-author: "Corey Sparks, PhD"
-date: July 28, 2020
-output:
-   html_document:
-    keep_md: true    
+author: 
+  - name: "[Corey S. Sparks, PhD](https://coreysparks.github.io)"
+    affiliation: "[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    df_print: paged
     fig_height: 7
     fig_width: 7
     toc: true
     toc_float: true
-    toc_collapsed: true
-    toc_depth: 3
-    number_sections: true
-    theme: lumen
-    includes:
-      in_header: logo.html
 ---
+
+## Product Limit Estimation
+
+[Kaplan and Meier (1958)](https://www.tandfonline.com/doi/pdf/10.1080/01621459.1958.10501452?casa_token=YIcJDiyQjYwAAAAA:qTa-OQEPtvVy6p4QoBCMx1VIgMey7tJWq-21zMj0LzYKFbKkRO_MYvO1V_7f8qihpgbgllZAa65O) derived an estimator of the survivorship function for a sample of censored and uncensored cases. 
+
+* The method figured survival to a time, t, is the product of the survival from all previous time points.
+
+* i.e. you can only get to time 3, if you survive time 1 and time 2, etc
+
+We can write this as
+
+$$\hat{S(t)} = (1-\hat{p(t_1)})(1-\hat{p(t_2)}) \dots (1-\hat{p(t_j)})$$
+
+Unlike the life-table and discrete time methods of estimating survival, which lumped time into discrete periods, K-M uses the information contained in the actual durations.
+
+Each K-M interval begins with a single event time, and ends just prior to the next event time.
+
+### Kaplan-Meier Estimation
+The K-M estimator is written:
+$$\hat{S(t)} = \prod_{t_i \leqslant t}\frac{n_i - d_i}{n_i} = \prod_{t_i \leqslant t} \left[1- \frac{d_i}{Y_i} \right]$$
+
+Where the $t_i$ are the ranked survival times, $n_i$ is the number of individuals at risk at each time, $t_i$ is time, $d_i$ is the number of events at each time. 
+
+When censoring is present, you define $n_i$ by subtracting out the number of censored cases at that particular time.
+```{r, echo=FALSE, message=FALSE}
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+t1<-data.frame(Time_Interval=c("[0,1)", "[1,2)", "[2,4)", "[4, 5)", "[5, 6)", "[6+)"),
+               time=c(0, 1, 2, 4, 5, 6),
+               n=c(100,NA, NA, NA, NA, NA),
+               d=c(15, 5, 1, 2, 5, 2),
+               c=c(0,2,5,2,0,2),
+               prob=c(1,NA, NA, NA, NA, NA), 
+               St=c(1,NA, NA, NA, NA, NA))
+
+for (i in 2:6){
+t1$n[i]<-t1$n[i-1]- t1$d[i-1] -t1$c[i-1]
+t1$prob[i]<-1-(t1$d[i]/t1$n[i])
+}
+
+t1$St<-cumprod(t1$prob)
+
+t1%>%
+  kable()%>%
+  column_spec(1:4, border_left = T, border_right = T)%>%
+  kable_styling()
+
+t1%>%
+  ggplot()+
+  geom_step(aes(x=time, y=St,color="a"))+
+  geom_step(aes(x=time, y=prob, color="b"))+
+  scale_colour_identity(guide="legend")+
+  scale_colour_manual(name = 'Function Type', 
+                      values =c('a'='red','b'='green'),
+         labels = c('S(t)','p(t)'))+
+  xlab("Time")+ylab("Probability")+
+  ggtitle("Kaplan - Meier Survival and Probability Functions")
+```
+
+### K-M and the hazard function
+The exact estimate of the K-M hazard function actually depends on the width of the time interval at each observed time point.
+
+$$\hat{h(t_j)} = \frac{\hat{p_{KM}(t_j)}}{\text{width}_j}$$
+and you can get this estimate from the `muhaz` library in R. 
+
+### Variance in the K-M Etimates
+Since the K-M survival function is a statistical estimate, it also has uncertainty to it. To measure the uncertainty, or variance in the estimate, the tradiational method is to use the Greenwood formula.
+
+$$\text{Var}(S(t)) = \hat{S(t)}^2 \sum_{t_i \leqslant t} \frac{d_i}{n_i(n_i-d_i)}$$
+and standard error equal to $s.e.(S(t))= \sqrt{\text{Var}(S(t))}$
+
+If we have a standard error of the survival function, the assuming the sampling distribution of the survival function is normal, we can calculate a normal confidence interval for the survival function at each time:
+
+$$c.i.(S(t)) = \hat{S(t)} \pm z_{1-\alpha/2} * s.e.(S(t))$$
+
+where $z$ is the standard normal variate corresponding to the the $1-\alpha/2$ level of confidence.
+
+#### Estimating the cumulative hazard function.
+If we have estimates of $\hat{h(t_j)}$, we can either calculate the value of the cumulative hazard function using the relationship among survival function:
+
+$$H(t) = -\text{log } S(t)$$
+or use the Nelson-Aalen estimator:
+
+$$\hat{H(t)} = \sum_{t_i \leqslant t} \frac{d_i}{Y_i}$$
+
+## Comparing Survival curves between groups
+
+Often in our data there are distinct groups for which we want to compare survival patterns
+* e.g. treatment vs. control group in clinical trial
+* e.g. proportion of women without a first birth by education category
+
+To do this we typically construct a variable that represents an identifier for members of reach group. This can be referred to as an indicator, or class, variable. 
+
+This is the same process as doing a two sample test for a regular outcome, such as a t-test or chi square test.
+
+* One limitation of survival data is that they are typically skewed, meaning their distribution is not symmetrical
+
+* This means that many traditional hypothesis test (t-test, z-test) for comparison of central tendency are no appropriate
+
+* Instead we use a variety of non-parametric methods 
+
+* Simply meaning that these tests are not dependent on the shape of the distribution or on the parameters of the distribution
+
+* Also, due to *censoring*, traditional distributional parameters like the mean are less meaningful, so tests on said parameters would be incorrect
+
+### Graphical methods of comparison
+
+The first stop on our examination of between group comparison is the *inter-ocular traumatic test*
+
+You may not be familiar with this test, but in general, if you look at a plot, and if you think there's a difference, say between two lines, there ususally is, and many times the human eye is a more discerning test than anything.
+
+```{r, echo=FALSE}
+x<-rnorm(100, mean=10, sd=1)
+x2<-rnorm(100, mean=2, sd=2)
+df<-data_frame(x=c(x, x2),group=c(rep(1, 100), rep(2, 100)))
+df%>%
+  ggplot()+geom_density(aes(x, group=group, color=factor(group)))
+```
+
+
+![](https://media.giphy.com/media/GQI382aMVej0k/giphy.gif)
+
+ 
+So, plot the survival curves, with confidence intervals, your eye can usually detect if there is a difference
+
+Under traditional statistics thinking, if the confidence intervals of the two curves overlap for their entire lengths, then the two groups are equivalent, if the confidence interval for the curves do not overlap at ANY point along the curve, they are different, simple, no?
+
+The *statisical* way of doing this, beyond looking at things, is the realm of Mantel-Haenszel test. R implements this test for 2 or *k* groups using the `survdiff()` function. It uses the method of [Harrington and Fleming (1982)](https://www.jstor.org/stable/2335991) which can weight the difference in survival curves flexibly, giving more or less weight to earlier or later survival times. 
+
+The classic Mantel-Haneszel test is just a $\chi^2$ test for independence. 
+
+At each time point, $t_i$, consider the following table for 2 groups:
+
+![M-H Test](images/mhtable.png)
+
+If we sum the differences between the observed and expected failures across all time points,we arrive with:
+
+Using 1 group as the basis:
+$$e_{i1} = \frac{n_{i1}d_{i1}}{n_i}$$
+is the expected number of failures. The general form of the test is then:
+
+$$Q = \frac{\sum_{i} w_i (d_{i1} - e_{i1})^2}{\sum_i w_i v_{i1}}$$
+Where $v_{i1}$ is the variance in the number of events in group 1. This test follows a $\chi^2$ distribution with 1 degree of freedom.
+
+The value of $w_i$ allows great flexibility for these tests, and is called the weight function at time $i$
+This allows the analyst to specify how much you want to weight the difference in survival at a particular time point.
+
+This testing logic also extends to *k-groups*, so instead of doing an ANOVA test, you would do the *k-group* test following this method.
+
+## Example
 
 This example will illustrate how to test for differences between survival functions estimated by the Kaplan-Meier product limit estimator. The tests all follow the methods described by Harrington and Fleming (1982) [Link](http://biomet.oxfordjournals.org/content/69/3/553.short). 
 

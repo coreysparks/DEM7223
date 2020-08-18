@@ -176,9 +176,11 @@ t3%>%
 ```
 
 # Functions of Survival Time
-### From the life table
 
-We had functions $l(x)$ and $q(x)$, representing survival to age $x$ and risk of decrementing at age $x$, respectively. 
+## Homage to the life table
+In life tables, we had lots of functions of the death process. Some of these were more interesting than others, with two being of special interest to use here. These are the $l(x)$ and $q(x, n)$ functions. If you recall,  $l(x)$ represents the population size of the stationary population that is alive at age $x$, and the risk of dying between age $x, x+n$ is $q(x, n)$. 
+
+These are genearlized more in the event history analysis literature, but we can still describe the distrubion of survival time using three functions. These are the **Survival Function**, $S(t)$, the **probability density function**, $f(t)$, and the **hazard function**, $h(t)$. These three are related and we can derive one from the others. 
 
 Now we must generalize these ideas to incorporate them into the broader event-history framework
 

@@ -2791,7 +2791,7 @@ div.tocify {
 <h1 class="title toc-ignore">DEM 7223 - Introduction to Event History Analysis and Functions of Survival Time</h1>
 <h4 class="author"><a href="https://coreysparks.github.io">Corey S. Sparks, PhD</a></h4>
 <address class="author_afil">
-<a href="https://hcap.utsa.edu/demography">The University of Texas at San Antonio</a><br><h4 class="date">17 August, 2020</h4>
+<a href="https://hcap.utsa.edu/demography">The University of Texas at San Antonio</a><br><h4 class="date">18 August, 2020</h4>
 
 </div>
 
@@ -3418,9 +3418,10 @@ Event
 </div>
 <div id="functions-of-survival-time" class="section level1">
 <h1>Functions of Survival Time</h1>
-<div id="from-the-life-table" class="section level3">
-<h3>From the life table</h3>
-<p>We had functions <span class="math inline">\(l(x)\)</span> and <span class="math inline">\(q(x)\)</span>, representing survival to age <span class="math inline">\(x\)</span> and risk of decrementing at age <span class="math inline">\(x\)</span>, respectively.</p>
+<div id="homage-to-the-life-table" class="section level2">
+<h2>Homage to the life table</h2>
+<p>In life tables, we had lots of functions of the death process. Some of these were more interesting than others, with two being of special interest to use here. These are the <span class="math inline">\(l(x)\)</span> and <span class="math inline">\(q(x, n)\)</span> functions. If you recall, <span class="math inline">\(l(x)\)</span> represents the population size of the stationary population that is alive at age <span class="math inline">\(x\)</span>, and the risk of dying between age <span class="math inline">\(x, x+n\)</span> is <span class="math inline">\(q(x, n)\)</span>.</p>
+<p>These are genearlized more in the event history analysis literature, but we can still describe the distrubion of survival time using three functions. These are the <strong>Survival Function</strong>, <span class="math inline">\(S(t)\)</span>, the <strong>probability density function</strong>, <span class="math inline">\(f(t)\)</span>, and the <strong>hazard function</strong>, <span class="math inline">\(h(t)\)</span>. These three are related and we can derive one from the others.</p>
 <p>Now we must generalize these ideas to incorporate them into the broader event-history framework</p>
 <p>Survival/duration times measure the <em>time to a certain event.</em></p>
 <p>These times are subject to random variations, and are considered to be random <em>iid</em> (independent and identically distributed; random) variates from some distribution</p>
@@ -3450,7 +3451,6 @@ lines(St, col=&quot;red&quot;)</code></pre>
 </ul></li>
 <li>The fundamental problem in survival analysis is coming up with a way to estimate these functions.</li>
 </ul>
-</div>
 <div id="defining-the-functions" class="section level3">
 <h3>Defining the functions</h3>
 <p>Let <em>T</em> denote the survival time, our goal is to characterize the distribution of <em>T</em> using these 3 functions.</p>
@@ -3485,6 +3485,7 @@ plot(St, type=&quot;s&quot;, xlab = &quot;Time&quot;, ylab=&quot;S(t)&quot;, yli
 <p>The hazard function relates death, <em>f(t)</em>, and survival, <em>S(t)</em>, to one another</p>
 <p><span class="math display">\[h(t) = \frac{f(t)}{S(t)}\]</span> <span class="math display">\[h(t) = \lim_{\Delta t \rightarrow 0} \frac{Pr(t \leqslant T \leqslant t + \Delta t | T \geqslant t)}{\Delta t}\]</span></p>
 <p>Which is the failure rate per unit time in the interval <em>t</em>, <span class="math inline">\(t+\Delta t\)</span>, the hazard may increase or decrease with time, or stay the same. This is really dependent on the distribution of failure times.</p>
+</div>
 </div>
 <div id="relationships-among-the-three-functions" class="section level2">
 <h2>Relationships among the three functions</h2>
