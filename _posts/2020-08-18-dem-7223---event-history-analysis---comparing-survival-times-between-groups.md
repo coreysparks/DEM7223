@@ -1,138 +1,12 @@
-<!DOCTYPE html>
+---
+title: "DEM 7223 - Event History Analysis - Comparing Survival Times Between Groups"
 
-<html>
+author: "list(name = "[Corey S. Sparks, PhD](https://coreysparks.github.io)", affiliation = "[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)")"
+date: "August 18, 2020"
+layout: post
+---
 
-<head>
-
-<meta charset="utf-8" />
-<meta name="generator" content="pandoc" />
-<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
-
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-
-
-<meta name="date" content="2020-08-18" />
-
-<title>DEM 7223 - Event History Analysis - Comparing Survival Times Between Groups</title>
-
-<script src="EX2_comparing_survival_20_files/kePrint-0.0.1/kePrint.js"></script>
-
-
-<style type="text/css">code{white-space: pre;}</style>
-<style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
-}
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {  }
-@media screen {
-a.sourceLine::before { text-decoration: underline; }
-}
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-
-/* A workaround for https://github.com/jgm/pandoc/issues/4278 */
-a.sourceLine {
-  pointer-events: auto;
-}
-
-</style>
-<script>
-// apply pandoc div.sourceCode style to pre.sourceCode instead
-(function() {
-  var sheets = document.styleSheets;
-  for (var i = 0; i < sheets.length; i++) {
-    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
-    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
-      var rule = rules[j];
-      // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
-      var style = rule.style.cssText;
-      // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
-      // replace div.sourceCode by a pre.sourceCode rule
-      sheets[i].deleteRule(j);
-      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
-    }
-  }
-})();
-</script>
-
-
-
-<link rel="stylesheet" href="EX2_comparing_survival_20_files/style.css" type="text/css" />
-
-
-
-
-
-</head>
-
-<body>
-
-
-
-
-<section class="page-header">
-<h1 class="title toc-ignore project-name">DEM 7223 - Event History Analysis - Comparing Survival Times Between Groups</h1>
-<h4 class="author project-author"><a href="https://coreysparks.github.io">Corey S. Sparks, PhD</a></h4>
-<address class="author_afil">
-<a href="https://hcap.utsa.edu/demography">The University of Texas at San Antonio</a><br><h4 class="date project-date">August 18, 2020</h4>
-</section>
-
-
+<script src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX2_comparing_survival_20_files/kePrint-0.0.1/kePrint.js"></script>
 
 <section class="main-content">
 <div id="product-limit-estimation" class="section level2">
@@ -349,7 +223,7 @@ St
 <a class="sourceLine" id="cb2-10" title="10"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Kaplan - Meier Survival and Probability Functions&quot;</span>)</a></code></pre></div>
 <pre><code>## Scale for &#39;colour&#39; is already present. Adding another scale for &#39;colour&#39;,
 ## which will replace the existing scale.</code></pre>
-<p><img src="EX2_comparing_survival_20_files/figure-html/unnamed-chunk-2-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX2_comparing_survival_20_files/figure-html/unnamed-chunk-2-1.png" /><!-- --></p>
 </div>
 <div id="k-m-and-the-hazard-function" class="section level3">
 <h3>K-M and the hazard function</h3>
@@ -391,7 +265,7 @@ St
 ## Please use `tibble()` instead.
 ## This warning is displayed once every 8 hours.
 ## Call `lifecycle::last_warnings()` to see where this warning was generated.</code></pre>
-<p><img src="EX2_comparing_survival_20_files/figure-html/unnamed-chunk-3-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX2_comparing_survival_20_files/figure-html/unnamed-chunk-3-1.png" /><!-- --></p>
 <p><img src="https://media.giphy.com/media/GQI382aMVej0k/giphy.gif" /></p>
 <p>So, plot the survival curves, with confidence intervals, your eye can usually detect if there is a difference</p>
 <p>Under traditional statistics thinking, if the confidence intervals of the two curves overlap for their entire lengths, then the two groups are equivalent, if the confidence interval for the curves do not overlap at ANY point along the curve, they are different, simple, no?</p>
@@ -399,7 +273,7 @@ St
 <p>The classic Mantel-Haneszel test is just a <span class="math inline">\(\chi^2\)</span> test for independence.</p>
 <p>At each time point, <span class="math inline">\(t_i\)</span>, consider the following table for 2 groups:</p>
 <div class="figure">
-<img src="images/mhtable.png" alt="M-H Test" />
+<img src="{{ site.url }}{{ site.baseurl }}/images/mhtable.png" alt="M-H Test" />
 <p class="caption">M-H Test</p>
 </div>
 <p>If we sum the differences between the observed and expected failures across all time points,we arrive with:</p>
@@ -460,7 +334,7 @@ St
 ## highses=0 4179    362     NA      NA      NA
 ## highses=1 1789    172     NA      NA      NA</code></pre>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1"><span class="kw">ggsurvplot</span>(fit1, <span class="dt">xlim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">12</span>), <span class="dt">conf.int=</span>T, <span class="dt">title=</span><span class="st">&quot;Survival Function for Infant Mortality - Low vs. High SES Households&quot;</span>, <span class="dt">ylim=</span><span class="kw">c</span>(.<span class="dv">8</span>, <span class="dv">1</span>))</a></code></pre></div>
-<p><img src="EX2_comparing_survival_20_files/figure-html/unnamed-chunk-6-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX2_comparing_survival_20_files/figure-html/unnamed-chunk-6-1.png" /><!-- --></p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="kw">summary</span>(fit1)</a></code></pre></div>
 <pre><code>## Call: survfit(formula = Surv(death.age, d.event) ~ highses, data = model.dat)
 ## 
@@ -559,7 +433,7 @@ St
 ##    11   1345       4    0.906 0.00700        0.893        0.920
 ##    12   1313      24    0.890 0.00764        0.875        0.905</code></pre>
 <div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb25-1" title="1"><span class="kw">ggsurvplot</span>(fit2, <span class="dt">xlim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">12</span>), <span class="dt">ylim=</span><span class="kw">c</span>(.<span class="dv">8</span>, <span class="dv">1</span>), <span class="dt">conf.int=</span>T, <span class="dt">title=</span><span class="st">&quot;Survival Function for Infant mortality - Rural vs Urban Residence&quot;</span>)</a></code></pre></div>
-<p><img src="EX2_comparing_survival_20_files/figure-html/unnamed-chunk-8-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX2_comparing_survival_20_files/figure-html/unnamed-chunk-8-1.png" /><!-- --></p>
 </div>
 </div>
 <div id="two--sample-test" class="section level1">
@@ -626,7 +500,7 @@ St
 ##  [1] 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2</code></pre>
 <div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb36-1" title="1"><span class="kw">plot</span>(<span class="dt">y=</span>haz2<span class="op">$</span>haz[<span class="dv">1</span><span class="op">:</span><span class="dv">12</span>], <span class="dt">x=</span>haz2<span class="op">$</span>time[<span class="dv">1</span><span class="op">:</span><span class="dv">12</span>], <span class="dt">col=</span><span class="dv">1</span>, <span class="dt">lty=</span><span class="dv">1</span>, <span class="dt">type=</span><span class="st">&quot;s&quot;</span>)</a>
 <a class="sourceLine" id="cb36-2" title="2"><span class="kw">lines</span>(<span class="dt">y=</span>haz2<span class="op">$</span>haz[<span class="dv">13</span><span class="op">:</span><span class="dv">24</span>], <span class="dt">x=</span>haz2<span class="op">$</span>time[<span class="dv">13</span><span class="op">:</span><span class="dv">24</span>], <span class="dt">col=</span><span class="dv">2</span>, <span class="dt">lty=</span><span class="dv">1</span>, <span class="dt">type=</span><span class="st">&quot;s&quot;</span>)</a></code></pre></div>
-<p><img src="EX2_comparing_survival_20_files/figure-html/unnamed-chunk-11-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX2_comparing_survival_20_files/figure-html/unnamed-chunk-11-1.png" /><!-- --></p>
 <p>This may be suggestive that children in urban areas may live in poorer environmental conditions.</p>
 <div id="k--sample-test" class="section level3">
 <h3>k- sample test</h3>
@@ -652,7 +526,7 @@ St
 <a class="sourceLine" id="cb41-2" title="2"><span class="co">#quantile(fit3, probs=.05)</span></a>
 <a class="sourceLine" id="cb41-3" title="3"></a>
 <a class="sourceLine" id="cb41-4" title="4"><span class="kw">ggsurvplot</span>(fit3,<span class="dt">conf.int =</span> T, <span class="dt">risk.table =</span> F, <span class="dt">title =</span> <span class="st">&quot;Survivorship Function for Infant Mortality&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;Time in Months&quot;</span>, <span class="dt">xlim =</span> <span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">12</span>), <span class="dt">ylim=</span><span class="kw">c</span>(.<span class="dv">8</span>, <span class="dv">1</span>))</a></code></pre></div>
-<p><img src="EX2_comparing_survival_20_files/figure-html/unnamed-chunk-12-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX2_comparing_survival_20_files/figure-html/unnamed-chunk-12-1.png" /><!-- --></p>
 <div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb42-1" title="1"><span class="kw">survdiff</span>(<span class="kw">Surv</span>(death.age, d.event)<span class="op">~</span>v024, <span class="dt">data=</span>model.dat)</a></code></pre></div>
 <pre><code>## Call:
 ## survdiff(formula = Surv(death.age, d.event) ~ v024, data = model.dat)
@@ -677,7 +551,7 @@ St
 <div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb46-1" title="1">fit4&lt;-<span class="kw">survfit</span>(<span class="kw">Surv</span>(death.age, d.event)<span class="op">~</span>rural<span class="op">+</span>secedu, <span class="dt">data=</span>model.dat)</a>
 <a class="sourceLine" id="cb46-2" title="2"><span class="co">#summary(fit4)</span></a>
 <a class="sourceLine" id="cb46-3" title="3"><span class="kw">ggsurvplot</span>(fit4,<span class="dt">conf.int =</span> T, <span class="dt">risk.table =</span> F, <span class="dt">title =</span> <span class="st">&quot;Survivorship Function for Infant Mortality&quot;</span>, <span class="dt">xlab =</span> <span class="st">&quot;Time in Months&quot;</span>, <span class="dt">xlim =</span> <span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">12</span>), <span class="dt">ylim=</span><span class="kw">c</span>(.<span class="dv">8</span>, <span class="dv">1</span>))</a></code></pre></div>
-<p><img src="EX2_comparing_survival_20_files/figure-html/unnamed-chunk-13-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX2_comparing_survival_20_files/figure-html/unnamed-chunk-13-1.png" /><!-- --></p>
 <div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb47-1" title="1"><span class="co">#plot(fit4, ylim=c(.85,1), xlim=c(0,12), col=c(1,1,2,2),lty=c(1,2,1,2), conf.int=F)</span></a>
 <a class="sourceLine" id="cb47-2" title="2"><span class="co">#title(main=&quot;Survival Function for Infant Mortality&quot;, sub=&quot;Rural/Urban * Mother&#39;s Education&quot;)</span></a>
 <a class="sourceLine" id="cb47-3" title="3"><span class="co">#legend(&quot;topright&quot;, legend = c(&quot;Urban, Low Edu&quot;,&quot;Urban High Edu     &quot;, &quot;Rural, Low Edu&quot;,&quot;Rural High Edu     &quot; ), col=c(1,1,2,2),lty=c(1,2,1,2))</span></a>
@@ -732,7 +606,7 @@ St
 <a class="sourceLine" id="cb56-2" title="2"><span class="kw">lines</span>(fit.s[[<span class="dv">1</span>]], <span class="dt">col=</span><span class="dv">2</span>) </a>
 <a class="sourceLine" id="cb56-3" title="3"><span class="kw">title</span>(<span class="dt">main=</span><span class="st">&quot;Survival Function for Infant Mortality&quot;</span>, <span class="dt">sub=</span><span class="st">&quot;Rural vs Urban Residence&quot;</span>)</a>
 <a class="sourceLine" id="cb56-4" title="4"><span class="kw">legend</span>(<span class="st">&quot;topright&quot;</span>, <span class="dt">legend =</span> <span class="kw">c</span>(<span class="st">&quot;Urban&quot;</span>,<span class="st">&quot;Rural&quot;</span> ), <span class="dt">col=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="dt">lty=</span><span class="dv">1</span>)</a></code></pre></div>
-<p><img src="EX2_comparing_survival_20_files/figure-html/unnamed-chunk-15-1.png" /><!-- --></p>
+<p><img src="{{ site.url }}{{ site.baseurl }}/knitr_files/EX2_comparing_survival_20_files/figure-html/unnamed-chunk-15-1.png" /><!-- --></p>
 <div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb57-1" title="1"><span class="co">#test statistic</span></a>
 <a class="sourceLine" id="cb57-2" title="2"><span class="kw">svylogrank</span>(<span class="kw">Surv</span>(death.age, d.event)<span class="op">~</span>rural, <span class="dt">design=</span>des)</a></code></pre></div>
 <pre><code>## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
@@ -750,21 +624,3 @@ St
 <p>And we see the p-value is larger than assuming random sampling.</p>
 </div>
 </section>
-
-
-
-<!-- code folding -->
-
-
-<!-- dynamically load mathjax for compatibility with self-contained -->
-<script>
-  (function () {
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
-    document.getElementsByTagName("head")[0].appendChild(script);
-  })();
-</script>
-
-</body>
-</html>
