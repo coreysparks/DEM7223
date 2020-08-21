@@ -1,0 +1,5 @@
+library(ipumsr)
+ddi<-read_ipums_ddi("/media/corey/extra/classes/dem7223/dem7223_20/data/nhis_00013.xml")
+ihis<-read_ipums_micro(ddi)
+ihis<-haven::zap_labels(ihis)
+saveRDS(ihis, file="/media/corey/extra/classes/dem7223/dem7223_20/data/ihis_fa2020.rds")
