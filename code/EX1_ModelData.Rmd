@@ -280,7 +280,7 @@ $$f(t) = \frac{-dS(t)}{dt}$$
 
 and the hazard function as:
 
-$$h(t) = \frac{{-dS(t)}/{dt}{S(t)}$$ 
+$$h(t) = \frac{-d \text{ log } S(t)}{dt}$$ 
 
 If we integrate this and let $S(0)=1$, then
 
