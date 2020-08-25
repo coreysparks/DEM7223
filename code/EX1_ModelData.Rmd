@@ -49,7 +49,7 @@ library(dplyr)
 * **Durations** – length of an episode
 * **Time axis** – Metric for measuring durations (days, months, years)
 
-![State Space Illustration](/home/corey/git_area/DEM7223/images/state_concepts.png)
+![State Space Illustration](C:/Users/ozd504/Documents/GitHub/DEM7223/images/state_concepts.png)
 
 ### Issues in event history data
 #### Censoring
@@ -57,7 +57,7 @@ library(dplyr)
   + e.g. you know someone gets married, but you never observe them having a child
   + e.g. someone leaves alcohol treatment and is never observed drinking again
 
-![Censoring](/home/corey/git_area/DEM7223/images/censoring.png)
+![Censoring](C:/Users/ozd504/Documents/GitHub/DEM7223/images/censoring.png)
 
 #### Non-informative censoring
 * The individual is not observed because the observer ends the study period
@@ -91,8 +91,10 @@ library(dplyr)
   + Time is measured in discrete lumps > semester a student leaves college
   + Each observed duration is not necessarily unique, and takes one of a set of discrete values
 
-![Time Scales](/home/corey/git_area/DEM7223/images/timescales.png)
+![Time Scales](C:/Users/ozd504/Documents/GitHub/DEM7223/images/timescales.png)
+
 #### Making continuous outcomes discrete
+
 * Ideally you should measure the duration as finely as possible (see Freedman et al)
 * Often you may choose to discretize the data > take continuous time and break it into discrete chunks
 
@@ -196,7 +198,7 @@ These times are subject to random variations, and are considered to be random *i
 * The probability density function, $f(t)$
 * The hazard function, $h(t)$
 
-![3 functions](/home/corey/git_area/DEM7223/images/functions.png)
+![3 functions](C:/Users/ozd504/Documents/GitHub/DEM7223/images/functions.png)
 ```{r}
 Ft<-cumsum(dlnorm(x = seq(0, 110, 1), meanlog = 4.317488, sdlog = 2.5)) #mean of 75 years, sd of 12.1 years
 ft<-diff(Ft)
