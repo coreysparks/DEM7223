@@ -1,16 +1,18 @@
 ---
 title: "DEM 7223 - Event History Analysis - Comparing Survival Times Between Groups"
-author: 
-  - name: "[Corey S. Sparks, PhD](https://coreysparks.github.io)"
-    affiliation: "[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)"
+author:
+- name: '[Corey S. Sparks, PhD](https://coreysparks.github.io)'
+  affiliation: '[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)'
 date: "August 18, 2020"
-output: 
+output:
+  pdf_document:
+    toc: yes
   html_document:
     df_print: paged
     fig_height: 7
     fig_width: 7
-    toc: true
-    toc_float: true
+    toc: yes
+    toc_float: yes
 ---
 
 ## Product Limit Estimation
@@ -43,7 +45,7 @@ library(dplyr)
 library(ggplot2)
 ```
 
-```{r}
+```{r, results='asis'}
 t1<-data.frame(Time_Interval=c("[0,1)", "[1,2)", "[2,4)", "[4, 5)", "[5, 6)", "[6+)"),
                time=c(0, 1, 2, 4, 5, 6),
                n=c(100,NA, NA, NA, NA, NA),
@@ -60,9 +62,9 @@ t1$prob[i]<-1-(t1$d[i]/t1$n[i])
 t1$St<-cumprod(t1$prob)
 
 t1%>%
-  kable()%>%
-  column_spec(1:4, border_left = T, border_right = T)%>%
-  kable_styling()
+  kable(format ="simple" )#%>%
+#  column_spec(1:4, border_left = T, border_right = T)#%>%
+#  kable_styling()
 
 t1%>%
   ggplot()+
@@ -136,8 +138,7 @@ df%>%
   ggplot()+geom_density(aes(x, group=group, color=factor(group)))
 ```
 
-
-![](https://media.giphy.com/media/GQI382aMVej0k/giphy.gif)
+<!-- ![](https://media.giphy.com/media/GQI382aMVej0k/giphy.gif) -->
 
  
 So, plot the survival curves, with confidence intervals, your eye can usually detect if there is a difference
@@ -150,7 +151,7 @@ The classic Mantel-Haneszel test is just a $\chi^2$ test for independence.
 
 At each time point, $t_i$, consider the following table for 2 groups:
 
-![M-H Test](/mnt/c/Users/ozd504/Documents/GitHub/DEM7223/images/mhtable.png)
+ ![M-H Test](C:/Users/ozd504/Documents/GitHub/DEM7223/images/mhtable.png)
 
 If we sum the differences between the observed and expected failures across all time points,we arrive with:
 
@@ -201,7 +202,8 @@ model.dat$death.age<-ifelse(model.dat$b5==1,
 
 #censoring indicator for death by age 1, in months (12 months)
 model.dat$d.event<-ifelse(is.na(model.dat$b7)==T|model.dat$b7>12,0,1)
-model.dat$d.eventfac<-factor(model.dat$d.event); levels(model.dat$d.eventfac)<-c("Alive at 1", "Dead by 1")
+model.dat$d.eventfac<-factor(model.dat$d.event)
+levels(model.dat$d.eventfac)<-c("Alive at 1", "Dead by 1")
 table(model.dat$d.eventfac)
 
 ```
@@ -217,7 +219,9 @@ model.dat$highses<-Recode(model.dat$v190, recodes ="1:3 = 0; 4:5=1; else=NA")
 fit1<-survfit(Surv(death.age, d.event)~highses, data=model.dat)
 fit1
 
-ggsurvplot(fit1, xlim=c(0,12), conf.int=T, title="Survival Function for Infant Mortality - Low vs. High SES Households", ylim=c(.8, 1))
+ggsurvplot(fit1, xlim=c(0,12), conf.int=T, 
+           title="Survival Function for Infant Mortality - Low vs. High SES Households",
+           ylim=c(.8, 1))
 
 summary(fit1)
 
@@ -248,7 +252,8 @@ fit2<-survfit(Surv(death.age, d.event)~rural, data=model.dat, conf.type = "log")
 fit2
 summary(fit2)
 
-ggsurvplot(fit2, xlim=c(0,12), ylim=c(.8, 1), conf.int=T, title="Survival Function for Infant mortality - Rural vs Urban Residence")
+ggsurvplot(fit2, xlim=c(0,12), ylim=c(.8, 1), conf.int=T,
+           title="Survival Function for Infant mortality - Rural vs Urban Residence")
 ```
 
 
@@ -297,7 +302,9 @@ fit3
 #summary(fit3)
 #quantile(fit3, probs=.05)
 
-ggsurvplot(fit3,conf.int = T, risk.table = F, title = "Survivorship Function for Infant Mortality", xlab = "Time in Months", xlim = c(0,12), ylim=c(.8, 1))
+ggsurvplot(fit3,conf.int = T, risk.table = F,
+           title = "Survivorship Function for Infant Mortality",
+           xlab = "Time in Months", xlim = c(0,12), ylim=c(.8, 1))
 
 survdiff(Surv(death.age, d.event)~v024, data=model.dat)
 
@@ -315,7 +322,9 @@ table(model.dat$secedu, model.dat$d.eventfac)
 
 fit4<-survfit(Surv(death.age, d.event)~rural+secedu, data=model.dat)
 #summary(fit4)
-ggsurvplot(fit4,conf.int = T, risk.table = F, title = "Survivorship Function for Infant Mortality", xlab = "Time in Months", xlim = c(0,12), ylim=c(.8, 1))
+ggsurvplot(fit4,conf.int = T, risk.table = F,
+           title = "Survivorship Function for Infant Mortality",
+           xlab = "Time in Months", xlim = c(0,12), ylim=c(.8, 1))
 
 #plot(fit4, ylim=c(.85,1), xlim=c(0,12), col=c(1,1,2,2),lty=c(1,2,1,2), conf.int=F)
 #title(main="Survival Function for Infant Mortality", sub="Rural/Urban * Mother's Education")
@@ -377,16 +386,22 @@ In this example, we will examine how to calculate the survival function for a lo
 
 First we load our data
 ```{r}
-eclskk5<-readRDS("//mnt/c/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_20//data/eclskk5.rds")
+eclskk5<-readRDS("C:/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_20//data/eclskk5.rds")
 names(eclskk5)<-tolower(names(eclskk5))
 #get out only the variables I'm going to use for this example
-myvars<-c( "childid","x_chsex_r", "x_raceth_r", "x1kage_r","x4age", "x5age", "x6age", "x7age", "x2povty","x4povty_i", "x6povty_i", "x8povty_i","x12par1ed_i", "s2_id")
+myvars<-c( "childid","x_chsex_r", "x_raceth_r", "x1kage_r","x4age",
+           "x5age", "x6age", "x7age", "x2povty","x4povty_i", "x6povty_i",
+           "x8povty_i","x12par1ed_i", "s2_id")
 eclskk5<-eclskk5[,myvars]
 
 
 eclskk5$age1<-ifelse(eclskk5$x1kage_r==-9, NA, eclskk5$x1kage_r/12)
 eclskk5$age2<-ifelse(eclskk5$x4age==-9, NA, eclskk5$x4age/12)
-#for the later waves, the NCES group the ages into ranges of months, so 1= <105 months, 2=105 to 108 months. So, I fix the age at the midpoint of the interval they give, and make it into years by dividing by 12
+#for the later waves, the NCES group the ages into ranges of months,
+#so 1= <105 months, 2=105 to 108 months. 
+#So, I fix the age at the midpoint of the interval they give,
+#and make it into years by dividing by 12
+
 eclskk5$age3<-ifelse(eclskk5$x5age==-9, NA, eclskk5$x5age/12)
 
 eclskk5$pov1<-ifelse(eclskk5$x2povty==1,1,0)
@@ -406,7 +421,9 @@ Now, I need to form the transition variable, this is my event variable, and in t
 **NOTE** I need to remove any children who are already in poverty age wave 1, because they are not at risk of experiencing **this particular** transition. Again, this is called forming the *risk set*
 
 ```{r}
-eclskk5<-subset(eclskk5, is.na(pov1)==F&is.na(pov2)==F&is.na(pov3)==F&is.na(age1)==F&is.na(age2)==F&is.na(age3)==F&pov1!=1)
+eclskk5<-subset(eclskk5, is.na(pov1)==F&is.na(pov2)==F&
+                  is.na(pov3)==F&is.na(age1)==F&is.na(age2)==F&
+                  is.na(age3)==F&pov1!=1)
 
 eclskk5$povtran1<-ifelse(eclskk5$pov1==0&eclskk5$pov2==0, 0,1)
 eclskk5$povtran2<-ifelse(eclskk5$povtran1==1, NA,
@@ -448,9 +465,11 @@ This displays the number of poverty transitions between each of the waves.
 library(survminer)
 library(ggplot2)
 
-ggsurvplot(fit, data=e.long, risk.table = T, title="Survival function for poverty transition, K-5th Grade", ylim=c(.9,1))
+ggsurvplot(fit, data=e.long, risk.table = T, 
+           title="Survival function for poverty transition, K-5th Grade", ylim=c(.9,1))
                                                                                                                  
-ggsurvplot(fit, data=e.long, risk.table = T, fun="cumhaz", title="Cumulative Hazard function for poverty transition, K-5th Grade")
+ggsurvplot(fit, data=e.long, risk.table = T, fun="cumhaz",
+           title="Cumulative Hazard function for poverty transition, K-5th Grade")
 ```
 Which, again shows us that at least two of these groups are different from one another.
 
