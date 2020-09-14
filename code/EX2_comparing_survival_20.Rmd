@@ -372,4 +372,122 @@ svylogrank(Surv(death.age, d.event)~rural, design=des)
 
 And we see the p-value is larger than assuming random sampling. 
 
+# Using a longitudinal data source
+In this example, we will examine how to calculate the survival function for a longitudinally collected data set. Here I use data from the [ECLS-K ](http://nces.ed.gov/ecls/kinderdatainformation.asp). Specifically, we will examine the transition into poverty between kindergarten and third grade. 
+
+First we load our data
+```{r}
+eclskk5<-readRDS("//mnt/c/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_20//data/eclskk5.rds")
+names(eclskk5)<-tolower(names(eclskk5))
+#get out only the variables I'm going to use for this example
+myvars<-c( "childid","x_chsex_r", "x_raceth_r", "x1kage_r","x4age", "x5age", "x6age", "x7age", "x2povty","x4povty_i", "x6povty_i", "x8povty_i","x12par1ed_i", "s2_id")
+eclskk5<-eclskk5[,myvars]
+
+
+eclskk5$age1<-ifelse(eclskk5$x1kage_r==-9, NA, eclskk5$x1kage_r/12)
+eclskk5$age2<-ifelse(eclskk5$x4age==-9, NA, eclskk5$x4age/12)
+#for the later waves, the NCES group the ages into ranges of months, so 1= <105 months, 2=105 to 108 months. So, I fix the age at the midpoint of the interval they give, and make it into years by dividing by 12
+eclskk5$age3<-ifelse(eclskk5$x5age==-9, NA, eclskk5$x5age/12)
+
+eclskk5$pov1<-ifelse(eclskk5$x2povty==1,1,0)
+eclskk5$pov2<-ifelse(eclskk5$x4povty_i==1,1,0)
+eclskk5$pov3<-ifelse(eclskk5$x6povty_i==1,1,0)
+
+#Recode race with white, non Hispanic as reference using dummy vars
+eclskk5$race_rec<-recode (eclskk5$x_raceth_r, recodes="1 = 'nhwhite';2='nhblack';3:4='hispanic';5='nhasian'; 6:8='other';-9=NA", as.factor = T)
+eclskk5$male<-recode(eclskk5$x_chsex_r, recodes="1=1; 2=0; -9=NA")
+eclskk5$mlths<-recode(eclskk5$x12par1ed_i, recodes = "1:2=1; 3:9=0; else = NA")
+eclskk5$mgths<-recode(eclskk5$x12par1ed_i, recodes = "1:3=0; 4:9=1; else =NA") 
+```
+
+
+Now, I need to form the transition variable, this is my event variable, and in this case it will be 1 if a child enters poverty between the first wave of the data and the third grade wave, and 0 otherwise.
+
+**NOTE** I need to remove any children who are already in poverty age wave 1, because they are not at risk of experiencing **this particular** transition. Again, this is called forming the *risk set*
+
+```{r}
+eclskk5<-subset(eclskk5, is.na(pov1)==F&is.na(pov2)==F&is.na(pov3)==F&is.na(age1)==F&is.na(age2)==F&is.na(age3)==F&pov1!=1)
+
+eclskk5$povtran1<-ifelse(eclskk5$pov1==0&eclskk5$pov2==0, 0,1)
+eclskk5$povtran2<-ifelse(eclskk5$povtran1==1, NA,
+                         ifelse(eclskk5$pov2==0&eclskk5$pov3==0,0,1)
+                         )
+
+```
+
+Now we do the entire data set. To analyze data longitudinally, we need to reshape the data from the current "wide" format (repeated measures in columns) to a "long" format (repeated observations in rows). The `reshape()` function allows us to do this easily. It allows us to specify our repeated measures, time varying covariates as well as time-constant covariates.
+
+```{r}
+e.long<-reshape(data.frame(eclskk5), idvar="childid", varying=list(c("age1","age2"),
+                                                     c("age2", "age3"),
+                                                    c("povtran1", "povtran2")),
+                v.names=c("age_enter", "age_exit","povtrans"),
+                times=1:2, direction="long" )
+e.long<-e.long[order(e.long$childid, e.long$time),]
+
+#find which kids failed in the first time period and remove them from the second risk period risk set
+failed1<-which(is.na(e.long$povtrans)==T)
+e.long<-e.long[-failed1,]
+e.long$age1r<-round(e.long$age_enter, 0)
+e.long$age2r<-round(e.long$age_exit, 0)
+head(e.long, n=10)
+```
+
+So, this shows us the repeated measures nature of the longitudinal data set.
+
+```{r, fig.width=7, fig.height=6}
+#poverty transition .
+fit<-survfit(Surv(time = time, event = povtrans)~1, e.long)
+fit
+summary(fit)
+```
+
+This displays the number of poverty transitions between each of the waves.
+
+```{r}
+library(survminer)
+library(ggplot2)
+
+ggsurvplot(fit, data=e.long, risk.table = T, title="Survival function for poverty transition, K-5th Grade", ylim=c(.9,1))
+                                                                                                                 
+ggsurvplot(fit, data=e.long, risk.table = T, fun="cumhaz", title="Cumulative Hazard function for poverty transition, K-5th Grade")
+```
+Which, again shows us that at least two of these groups are different from one another.
+
+
+
+```{r, fig.height=7, fig.width=8}
+library(muhaz)
+haz<-kphaz.fit(time=e.long$time, status=e.long$povtrans, method = "product-limit")
+haz
+kphaz.plot(haz, main="Hazard function plot")
+data.frame(haz)
+```
+
+This illustrates, that while the largest drop in survivorship occurred between 0 and 1, the hazard is actually higher in the 1-3 month range, illustrating the conditionality of that probability. There is also a large jump in risk at age 1, which may indicate something about age-heaping in the data.
+
+Now we have our S(t) and h(t) functions. We can derive the other functions of survival time from these but integrating (summing) and differentiating these functions. 
+
+```{r, fig.height=7, fig.width=8}
+#cumulative hazard
+plot(cumsum(haz$haz)~haz$time, 
+     main = "Cumulative Hazard function",
+     ylab="H(t)",xlab="Time in Months", 
+     type="l", lwd=2,col=3)
+
+#Survival function, I just store this in an object so I can use it
+surv<-fit
+
+#here is a cheap version of the pdf
+ft<- -diff(fit$surv)
+plot(ft, 
+     type="s",
+     ylab="f(t)",xlab="Time in Months",
+     main="Probability Density Function")
+
+#here is the cumulative distribution function
+Ft<-cumsum(ft)
+plot(Ft,  type="s", ylab="F(t)",xlab="Time ", main="Cumulative Distribution Function")
+  
+```
 
