@@ -150,7 +150,7 @@ The classic Mantel-Haneszel test is just a $\chi^2$ test for independence.
 
 At each time point, $t_i$, consider the following table for 2 groups:
 
-![M-H Test](images/mhtable.png)
+![M-H Test](/mnt/c/Users/ozd504/Documents/GitHub/DEM7223/images/mhtable.png)
 
 If we sum the differences between the observed and expected failures across all time points,we arrive with:
 
