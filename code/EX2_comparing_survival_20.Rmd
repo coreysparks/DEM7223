@@ -49,7 +49,7 @@ library(ggplot2)
 t1<-data.frame(Time_Interval=c("[0,1)", "[1,2)", "[2,4)", "[4, 5)", "[5, 6)", "[6+)"),
                time=c(0, 1, 2, 4, 5, 6),
                n=c(100,NA, NA, NA, NA, NA),
-               d=c(15, 5, 1, 2, 5, 2),
+               d=c(15, 15, 11, 0, 0, 2),
                c=c(0,2,5,2,0,2),
                prob=c(1,NA, NA, NA, NA, NA), 
                St=c(1,NA, NA, NA, NA, NA))
@@ -69,7 +69,7 @@ t1%>%
 t1%>%
   ggplot()+
   geom_step(aes(x=time, y=St,color="a"))+
-  geom_step(aes(x=time, y=prob, color="b"))+
+  geom_step(aes(x=time, y=1-prob, color="b"))+
   scale_colour_identity(guide="legend")+
   scale_colour_manual(name = 'Function Type', 
                       values =c('a'='red','b'='green'),
@@ -229,7 +229,7 @@ summary(fit1)
 
 Gives us the basic survival plot. 
 
-Next we will use `survtest()` to test for differences between the two or more groups. The `survdiff()` function performs the log-rank test to compare the survival patterns of two or more groups.
+Next we will use `survdiff()` to test for differences between the two or more groups. The `survdiff()` function performs the log-rank test to compare the survival patterns of two or more groups.
 
 ```{r}
 #two group compairison
@@ -302,7 +302,7 @@ fit3
 #summary(fit3)
 #quantile(fit3, probs=.05)
 
-ggsurvplot(fit3,conf.int = T, risk.table = F,
+ggsurvplot(fit3,conf.int = F, risk.table = F,
            title = "Survivorship Function for Infant Mortality",
            xlab = "Time in Months", xlim = c(0,12), ylim=c(.8, 1))
 
@@ -322,7 +322,7 @@ table(model.dat$secedu, model.dat$d.eventfac)
 
 fit4<-survfit(Surv(death.age, d.event)~rural+secedu, data=model.dat)
 #summary(fit4)
-ggsurvplot(fit4,conf.int = T, risk.table = F,
+ggsurvplot(fit4,conf.int = F, risk.table = F,
            title = "Survivorship Function for Infant Mortality",
            xlab = "Time in Months", xlim = c(0,12), ylim=c(.8, 1))
 
