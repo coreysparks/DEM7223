@@ -1,16 +1,16 @@
 ---
 title: "DEM 7223 - Event History Analysis - Parametric Hazard Models"
-author: 
-  - name: "[Corey S. Sparks, PhD](https://coreysparks.github.io)"
-    affiliation: "[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)"
+author:
+- name: '[Corey S. Sparks, PhD](https://coreysparks.github.io)'
+  affiliation: '[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)'
 date: "September 21, 2020"
-output: 
+output:
   html_document:
     df_print: paged
     fig_height: 7
     fig_width: 7
-    toc: true
-    toc_float: true
+    toc: yes
+    toc_float: yes
 ---
 
 ## Regression modeling of duration data
@@ -236,7 +236,10 @@ sub2$agefb = (sub2$age - (sub2$int.cmc - sub2$fbir.cmc)/12)
 Now I need to calculate the birth intervals, both observed and censored, and the event indicator (i.e. did the women *have* the second birth?)
 
 ```{r}
-sub2$secbi<-ifelse(is.na(sub2$sbir.cmc)==T, ((sub2$int.cmc))-((sub2$fbir.cmc)), (sub2$fbir.cmc-sub2$sbir.cmc))
+sub2$secbi<-ifelse(is.na(sub2$sbir.cmc)==T,
+                   ((sub2$int.cmc))-((sub2$fbir.cmc)), 
+                   (sub2$fbir.cmc-sub2$sbir.cmc))
+
 sub2$b2event<-ifelse(is.na(sub2$sbir.cmc)==T,0,1) 
 fit<-survfit(Surv(secbi, b2event)~1, sub2)
 fit
@@ -246,7 +249,7 @@ title(main="Survival Function for Second Birth Interval, DHS Model Data")
 
 ```
 
-###Estimating Parametric Hazard Models
+### Estimating Parametric Hazard Models
 While parametric models are not so common in demographic research, fundamental understanding of what they are and how they are constructed is of importance. 
 
 Some outcomes lend themselves very readily to the parametric approach, but as many demographic duration times are non-unique (tied), the parametric models are not statistically efficient for estimating the survival/hazard functions, as they assume the survival times are continuous random variables. 
@@ -255,7 +258,9 @@ In this section, we first estimate the empirical hazard function and then fit a 
 
 ```{r}
 #since these functions don't work with durations of 0, we add a very small amount to the intervals
-fit.haz.km<-kphaz.fit(sub2$secbi[sub2$secbi>0], sub2$b2event[sub2$secbi>0] , method = "product-limit")
+fit.haz.km<-kphaz.fit(sub2$secbi[sub2$secbi>0],
+                      sub2$b2event[sub2$secbi>0] , 
+                      method = "product-limit")
 
 #this is a version of the hazard that is smoothed using a kernel-density method
 fit.haz.sm<-muhaz(sub2$secbi[sub2$secbi>0], sub2$b2event[sub2$secbi>0] )
@@ -264,36 +269,39 @@ fit.haz.sm<-muhaz(sub2$secbi[sub2$secbi>0], sub2$b2event[sub2$secbi>0] )
 kphaz.plot(fit.haz.km,main="Plot of the hazard of having a second birth")
 #overlay the smoothed version
 lines(fit.haz.sm, col=2, lwd=3)
-legend("topleft", legend = c("KM hazard", "Smoothed Hazard"), col=c(1,2), lty=c(1,1))
+legend("topleft", legend = c("KM hazard", "Smoothed Hazard"),
+       col=c(1,2), lty=c(1,1))
 
 ```
 
 So now we see what the empirical hazard function looks like, in both the observed and smoothed estimate of it.
 
-###Create covariates
+### Create covariates
 Here, we create some predictor variables: Woman's education (secondary +, vs < secondary), Woman's age^2, Partner's education (> secondary school)
 
 ```{r}
 
 sub2$educ.high<-ifelse(sub2$educ %in% c(2,3), 1, 0)
 sub2$age2<-(sub2$agefb/5)^2
-sub2$partnerhiedu<-ifelse(sub2$partneredu<3,0,ifelse(sub2$partneredu%in%c(8,9),NA,1 ))
+sub2$partnerhiedu<-ifelse(sub2$partneredu<3,0,
+                          ifelse(sub2$partneredu%in%c(8,9),NA,1 ))
 
 options(survey.lonely.psu = "adjust")
-des<-svydesign(ids=~psu, strata=~strata, data=sub2[sub2$secbi>0,], weight=~weight )
+des<-svydesign(ids=~psu, strata=~strata,
+               data=sub2[sub2$secbi>0,], weight=~weight )
 
 rep.des<-as.svrepdesign(des, type="bootstrap" )
 
 ```
 
-#Fit the models
+# Fit the models
 Now we fit the models. 
 
 I use the `eha` [package](http://cran.r-project.org/web/packages/eha/index.html) to do this, since it fits parametric proportional hazard models, not accelerated failure time models. 
 
 I prefer the interpretation of regression models on the hazard scale vs. the survival time scale. EHA is not the only package that will fit parametric survival models, be sure you *read the documentation for the procedure you use!!* Different functions fit different parameterizations of the distributions. For example, the `survreg()` function in the `survival` library fits accelerated failure time models only.
 
-##Exponential Model
+### Exponential Model
 Often the exponential model isn't directly available in packages, so we can fit a weibull model with a fixed shape parameter. This is 100% legal.
 
 The exponential distribution has a constant hazard rate, $\lambda (t) = \lambda$. 
@@ -305,7 +313,8 @@ $\text{log} \lambda = x`\beta$
 ```{r}
 #exponential distribution for hazard, here we hard code it to be
 #a weibull dist with shape ==1 
-fit.1<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(agefb/5)+age2, data=sub2[sub2$secbi>0,], dist="weibull", shape = 1)
+fit.1<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(agefb/5)+age2,
+             data=sub2[sub2$secbi>0,], dist="weibull", shape = 1)
 summary(fit.1)
 plot(fit.1)
 
@@ -322,7 +331,7 @@ $\text{Hazard Ratio} = \frac{\exp \left( \beta_{\text{I(age/5)}} * 7 + \beta_{\t
 
 I choose 7 because `7 * 5` = 35, and 4 because `4*5` = 20. Remember, I divided Age by 5 when I created my variables. 
 
-###AFT model specification
+### AFT model specification
 If you wanted to do the AFT model, you can either `aftreg()` in the `eha` package or `survreg()` in the `survival` package. Generally AFT models are written as: 
 
 $\text{log} T = -x ` \beta + \sigma W$
@@ -330,16 +339,17 @@ Where _W_ is an error (residual) term, which is assumed to follow some distribut
 
 ```{r}
 
-fit.1.aft<-survreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2 + age2, data=sub2[sub2$secbi>0,],dist = "exponential")
+fit.1.aft<-survreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2 + age2,
+                   data=sub2[sub2$secbi>0,],dist = "exponential")
 
 summary(fit.1.aft)
 ```
 
 Which shows, compared to the PH model, that the coefficients are all backwards. That's because if a predictor lowers the hazard, then, by default it extends survival. 
 
-###Lower risk == longer survival times!
+### Lower risk == longer survival times!
 
-##Weibull Model
+### Weibull Model
 
 The Weibull model is more flexible than the Exponential, because it's distribution function has two parameters, scale and shape. 
 
@@ -349,7 +359,8 @@ The survival function is $S(t) = exp ( -(\lambda t)^p)$
 
 ```{r}
 #weibull distribution for hazard
-fit.2<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2, data=sub2[sub2$secbi>0,], dist="weibull")
+fit.2<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
+             data=sub2[sub2$secbi>0,], dist="weibull")
 summary(fit.2)
 plot(fit.2)
 
@@ -373,7 +384,7 @@ coef(fit.1)
 So for these two models, you can go back and forth. 
 
 
-##Log-Normal Model
+### Log-Normal Model
 The Log-normal distribution is more flexible and allows the hazard to change direction.
 
 The Log-normal distribution has hazard rate,
@@ -386,7 +397,8 @@ The survival function is $S(t) = 1 - \Phi \left ( \frac{log t - \mu}{\sigma} \ri
 
 ```{r}
 #log-normal distribution for hazard
-fit.3<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2, data=sub2[sub2$secbi>0,], dist="lognormal", center=T)
+fit.3<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
+             data=sub2[sub2$secbi>0,], dist="lognormal", center=T)
 summary(fit.3)
 plot(fit.3)
 
@@ -403,7 +415,8 @@ So, the log-normal model fits the empirical hazard pretty well up to ~150 months
 
 ```{r}
 #log-normal distribution for hazard
-fit.4<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2, data=sub2[sub2$secbi>0,], dist="loglogistic", center=T)
+fit.4<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
+             data=sub2[sub2$secbi>0,], dist="loglogistic", center=T)
 summary(fit.4)
 plot(fit.4)
 
@@ -426,7 +439,7 @@ AIC4<--2*fit.4$loglik[2]+2*length(fit.4$coefficients); AIC4
 And we see the log-logistic model best fits the data, based on the minimum AIC criteria
 
 
-##Piecewise constant exponential model
+### Piecewise constant exponential model
 The final model we consider is the Piecewise constant exponential model. This model breaks the data into pieces, where we may fit constant hazards within these pieces. 
 
 For instance, given the observed hazard function above, we may break the data into an early piece, say < 30 months, a high piece,30-80 months and maybe two low pieces (80-150 and >150), so to mimic the form of the hazard function.
@@ -434,7 +447,9 @@ For instance, given the observed hazard function above, we may break the data in
 
 ```{r}
 # here I must supply the times for the "pieces" where I expect the  hazard to be constant
-fit.5<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2, data=sub2[sub2$secbi>0,], dist="pch", cuts=c(30, 80, 150,250))
+fit.5<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
+             data=sub2[sub2$secbi>0,], dist="pch",
+             cuts=c(30, 80, 150,250))
 summary(fit.5)
 plot(fit.5)
 
@@ -450,12 +465,13 @@ AIC4
 ```
 
 
-##Graphical checks on the model fit
+## Graphical checks on the model fit
 
 The `eha` package also provides a graphical method for the Cumulative hazard function, which allows us to visualize these models even better. It uses the empirical hazard, as fit in the Cox model (more on this next week), and compares the parametric models to the empirical pattern:
 
 ```{r}
-emp<-coxreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2, data=sub2[sub2$secbi>0,])
+emp<-coxreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
+            data=sub2[sub2$secbi>0,])
 
 check.dist(sp=emp,pp=fit.1, main = "Empirical vs. Exponential")
 check.dist(sp=emp,pp=fit.2, main = "Empirical vs. Weibull")
@@ -467,7 +483,7 @@ check.dist(sp=emp,pp=fit.5, main = "Empirical vs. PCH")
 
 We see that the PCH model and the log-logistic models both appear to fit the empirical hazard function better than the other parametric models.
 
-##Using Survey design
+## Using Survey design
 There are no survey analysis functions to fit parametric hazard models, so we must roll our own using advice from Thomas Lumely in his book [Appendix E](http://uq5sd9vt7m.search.serialssolutions.com/?ctx_ver=Z39.88-2004&ctx_enc=info%3Aofi%2Fenc%3AUTF-8&rfr_id=info%3Asid%2Fsummon.serialssolutions.com&rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook&rft.genre=book&rft.title=Wiley+Series+in+Survey+Methodology&rft.au=Lumley%2C+Thomas&rft.date=2010-03-11&rft.pub=Wiley&rft.isbn=9780470284308&rft.externalDocID=10375602&paramdict=en-US) 
 **You can get this on campus through the library.**
 
@@ -491,7 +507,7 @@ survey.test$se.est/sqrt(diag(fit.2.aft.sum$var[-6, -6]))
 ```
 
 
-#Using Longitudinal Data
+## Using Longitudinal Data
 As in the other examples, I illustrate fitting these models to data that are longitudinal, instead of person-duration.
 
 In this example, we will examine how to fit the parametric model to a longitudinally collected data set. Here I use data from the [ECLS-K ](http://nces.ed.gov/ecls/kinderdatainformation.asp). Specifically, we will examine the transition into poverty between kindergarten and third grade. 
