@@ -2828,8 +2828,7 @@ div.tocify {
 <p>Some examples of parametric models:</p>
 <p>Linear regression, using the Normal distribution<br />
 <span class="math display">\[y \sim Normal (b_0+b_1*x, \sigma^2_e)\]</span> has 2 parameters, the mean, here shown as the linear mean function, and the variance in the residuals</p>
-<p>Logistic regression has mean function that is a transform of the mean</p>
-<p><span class="math display">\[y \sim Binomial \left ( \frac{1}{1+exp^{(b_0+b_1*x)} } \right)\]</span></p>
+<p>Logistic regression has mean function that is a transform of the mean <span class="math display">\[y \sim Binomial (p)\]</span> <span class="math display">\[p = \left ( \frac{1}{1+exp^{(b_0+b_1*x)} } \right)\]</span></p>
 <p>In both of these models, we estimate the parameters, <span class="math inline">\(b_0\)</span> and <span class="math inline">\(b_1\)</span> to describe how x affects y</p>
 <p>In Parametric hazard models, we estimate regression parameters as well, but we also estimate parameters that describe the <em>shape of the distribution</em> of duration times</p>
 <p>E.g. the normal distribution function is defined by 2 parameters: <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span>, which define the characteristic bell-shaped curve</p>
@@ -3271,7 +3270,7 @@ survey.test$pval&lt;-2*pnorm(survey.test$t,lower.tail = F )
 survey.test</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["beta"],"name":[1],"type":["chr"],"align":["left"]},{"label":["estimate"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["se.est"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["t"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["pval"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"(Intercept)","2":"3.385308441","3":"0.051205826","4":"66.111783","5":"0.000000e+00"},{"1":"educ.high","2":"0.221824182","3":"0.031282162","4":"7.091076","5":"1.330733e-12"},{"1":"partnerhiedu","2":"0.130191973","3":"0.055452286","4":"2.347820","5":"1.888366e-02"},{"1":"I(age/5)","2":"0.067808360","3":"0.012070688","4":"5.617605","5":"1.936222e-08"},{"1":"age2","2":"-0.004319788","3":"0.001260572","4":"-3.426847","5":"1.999389e+00"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["beta"],"name":[1],"type":["chr"],"align":["left"]},{"label":["estimate"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["se.est"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["t"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["pval"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"(Intercept)","2":"3.385308441","3":"0.049967316","4":"67.750456","5":"0.000000e+00"},{"1":"educ.high","2":"0.221824182","3":"0.034819445","4":"6.370698","5":"1.881693e-10"},{"1":"partnerhiedu","2":"0.130191973","3":"0.053765558","4":"2.421475","5":"1.545765e-02"},{"1":"I(age/5)","2":"0.067808360","3":"0.011921540","4":"5.687886","5":"1.286218e-08"},{"1":"age2","2":"-0.004319788","3":"0.001264065","4":"-3.417377","5":"1.999368e+00"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <pre class="r"><code>fit.2.aft&lt;-survreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2 + age2, data=sub2[sub2$secbi&gt;0,],dist = &quot;lognormal&quot;)
@@ -3280,7 +3279,7 @@ fit.2.aft.sum&lt;-summary(fit.2.aft)
 
 #Compare the se&#39;s of the parameters
 survey.test$se.est/sqrt(diag(fit.2.aft.sum$var[-6, -6]))</code></pre>
-<pre><code>## [1] 1.299015 1.220576 1.475366 1.391319 1.476068</code></pre>
+<pre><code>## [1] 1.267596 1.358595 1.430489 1.374127 1.480159</code></pre>
 <pre class="r"><code>#survey based errors are larger, as they should be.</code></pre>
 </div>
 <div id="using-longitudinal-data" class="section level2">

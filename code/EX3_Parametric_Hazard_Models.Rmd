@@ -74,8 +74,8 @@ $$y \sim Normal (b_0+b_1*x, \sigma^2_e)$$
 has 2 parameters, the mean, here shown as the linear mean function, and the variance in the residuals
 
 Logistic regression has mean function that is a transform of the mean
-
-$$y \sim Binomial \left ( \frac{1}{1+exp^{(b_0+b_1*x)} } \right)$$
+$$y \sim Binomial (p)$$
+$$p = \left ( \frac{1}{1+exp^{(b_0+b_1*x)} } \right)$$
 
 In both of these models, we estimate the parameters, $b_0$ and $b_1$ to describe how x affects y
 
