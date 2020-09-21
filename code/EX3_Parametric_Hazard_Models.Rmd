@@ -41,6 +41,7 @@ usually letting $g(x_i) = \text{exp } (x_i ' \beta)$
 **Accelerated Failure Time Model (AFT)**
 
 $$log(t_i) = x_i ' \beta +z_i$$
+
 letting $z_i$ have a parametric density
 
 
@@ -66,89 +67,112 @@ They define characteristics of mathematical functions, and variations in said fu
 
 Some examples of parametric models:
 
-Linear regression, using the Normal distribution  $$y \sim Normal (b_0+b_1*x, \sigma^2_e)$$
-logistic regression y=log(p/1-p)=b0+b1*x
-In both of these models, we estimate the parameters, b0 and b1 to describe how x affects y
+Linear regression, using the Normal distribution  
+$$y \sim Normal (b_0+b_1*x, \sigma^2_e)$$
+has 2 parameters, the mean, here shown as the linear mean function, and the variance in the residuals
+
+Logistic regression has mean function that is a transform of the mean
+
+$$y \sim Binomial \left ( \frac{1}{1+exp^{(b_0+b_1*x)} } \right)$$
+
+In both of these models, we estimate the parameters, $b_0$ and $b_1$ to describe how x affects y
 
 
-In Parametric hazard models, we estimate parameters that describe the shape of the distribution of duration times
-E.g. the normal distribution function is defined by 2 parameters: μ and σ
-Which define the characteristic
- bell-shaped curve
+In Parametric hazard models, we estimate regression parameters as well, but we also estimate parameters that describe the *shape of the distribution* of duration times
+
+E.g. the normal distribution function is defined by 2 parameters: $\mu$ and $\sigma$, which define the characteristic bell-shaped curve
  
 ### Common distributions in event history analysis
 
 * Exponential
+This is a 1 parameter distribution, the hazard model for this is:
+
+$$h_i(t,x_i) = h_0 \text{ } exp(x'\beta)$$
+The exponential is often a starting point that we don't use very much. The biggest reason we don't use it is because the hazard function is assumed to be a constant ($h_0$ isn't a function of time)
 
 * Weibull
+The Weibull is a two parameter distribution, it's hazard function without covariates is:
 
-* Log-normal
+$$h_i(t) = \theta \gamma t^{\gamma-1}$$
 
-* Log-logistic
+it's hazard function with covariates is:
 
-* Gompertz
+$$h_i(t,x_i) = \gamma exp(x'\beta) t^{\gamma-1}$$
+You notice that $\theta$ is replaced with the mean function in the second equation.
+The Weibull is a much more flexible distribution, and the shape of the hazard function change as $\gamma$ changes. 
 
-More parameters allow for more flexibility to the shape of the distribution, and hence more flexibility when it comes to fitting the distribution to data
+![](/mnt/c/Users/ozd504/Documents/Github/DEM7223/images/weibull.png)
+
+* Log-normal - another 2 parameter distribution, yes, the log of the Normal distribution. Strictly positive. Hazard function is this monster:
+
+$$h(t) = \frac{\frac{1}{t\sigma \sqrt{2\pi}}exp \left [ \frac{-1}{2\sigma^2} {ln(t)-\mu}^2 \right]} {1-\Phi \left \{ \frac{ln(t)- \mu}{\sigma} \right \}} $$
+**Yikes!**
+This is a much more flexible model, because the hazard can actually increase and decrease, which the Weibull cannot do. 
+
+* Log-logistic - another 2 parameter distribution, very flexible
+
+$$h(t) = \frac{\lambda \frac{1}{\gamma} t [ \frac{1}{\gamma} -1 ] }
+{\gamma  [ 1+(\lambda t)^{\frac{1}{\gamma}} ]}$$
+
+**Yikes!**
+If $\gamma$ < then the hazard rises, then falls, if $\gamma \geqslant 1$, the hazard is declining
+The parameter $\lambda$ is the location, and can be parameterized as the linear mean function:
+$\lambda = e^{-{X'\beta}}$
+
+* Gompertz - very famous demographic model for adult mortality, hazard function is:
+
+$$h(t) = \lambda e^{\gamma t} $$
+Where $\lambda = e^{X'\beta}$
+
+If $\gamma$ < 1, then the hazard is monotone decreasing over time, if $\gamma$  >1, then the hazard is increasing over time, and if $\gamma$ = 1 then the hazard is flat, and we have the exponential.
+
+
+In general, more parameters allow for more flexibility to the shape of any distribution, and hence more flexibility when it comes to fitting the distribution to data.
+
 But be aware that more complicated models are not always better than simple ones, and you should compare the fit of the model versus its complexity
+
 Parsimony is the backbone of science!
-
-### Connecting distributions to data
-Let's consider the exponential distribution as an example of how to fit a distribution to duration data.
-The exponential's survival time functions are
-
-
-
-Since λ is constant over time, the hazard is a flat line, or constant for all time.  
-If a plot of the K-M hazard is not flat over time don't use this model!
 
 ### More on the exponential model
 ### AFT form
 Since the exponential distribution is solely determined by the parameter, λ, and λ>0, we need a model to accommodate this.
 The exponential model can be specified two ways
 The accelerated failure time model is:
-log(Ti) = xi 'β + zi
+
+$$log(T_i) = x'\beta + z_i$$
 Where the β's are regression parameters relating covariate values (the x's) to the duration time
 
 #### PH form
-If we treat the hazard rate, λ, as a function of the covariates and the β's, we can write λ as
-λi=exp (- xi 'β)
+If we treat the hazard rate, $\lambda$, as a function of the covariates and the $\beta$'s, we can write $\lambda$ as
+
+$$\lambda_i=exp^{(- x'β)}$$
 So the hazard rate, is given by the covariates x
 
 ### More on proportional hazards
-An important aspect of the exponential model is called the proportional hazards interpretation
-If x is either 1 or 0, and the first term in the β's is a constant (the intercept term), we can write our hazard model as:
+An important aspect of the exponential model is called the *proportional hazards interpretation*
+If x is either 1 or 0, and the first term in the $\beta$'s is a constant (the intercept term), we can write our hazard model as:
 
-So β0  is a constant, called the baseline hazard
-Changes to this baseline hazard happen through the effect of β1, or the covariate effects, we can consider the relative change in the hazard for someone with x1 =1, verses someone with x1 = 0
+$$\frac{h_i(t|x=1)}{h_i(t|x=0)}= \frac{exp(-\beta_0 + \beta_1 * 1)}{exp(-\beta_0 + \beta_1 * 0)} = exp^{(\beta_1)}$$
 
-This is known as the proportional hazards property
+So $\beta$  is a constant, called the *baseline hazard*
 
-Since the hazard rate in the Exponential model is 
-invariant with respect to time, it represents a very simplistic model
+Changes to this baseline hazard happen through the effect of $\beta_1$, or the covariate effects, we can consider the relative change in the hazard for someone with x =1, verses someone with x = 0
+
+This is known as the *proportional hazards property*
+
+Since the hazard rate in the Exponential model is invariant with respect to time, it represents a very simplistic model
  and one that often does not occur in the real world
 
 
-### Weibull model
-Since the Weibull distribution is determined by two parameters, it allows us more flexibility in our modeling
-The survival time functions for the Weibull are
-
-Similar to the exponential model, the Weibull model is parameterized in terms of covariates as a log-linear model of time, or the AFT parameterization
-log(T) = x'β+σε
-Where the β's are regression parameters relating covariate values (the x's) to the duration time, 
-ε is an error term corresponding to an extreme value distribution, and σ is scaling term for the error distribution equal to 1/p 
-
-Like the exponential, however, we can also express the Weibull in terms of the conditional hazard rate
-
-This parameterization of the Weibull model gives us the proportional hazards model
-In estimation, the term exp(x'β) can be thought of as the scale parameter and p as the shape parameter
-
 ### Be careful with interpretations!
 For Accelerated failure time model
-Y=log (duration), so if exp(β) >1, you have an increase in time (implies a decrease in risk), if exp(β)<1 you have a decrease in time (and an implied increase in risk)
-For Proportional Hazards model
-Y=hazard(time), so if exp(β) >1, you have an increase in hazard (and a decrease in duration), if exp(β)<1 you have a decrease in hazard (and an increase in duration)
+Y=log (duration), so if $exp(\beta_1) > 1$, you have an increase in time (implies a decrease in risk), if  $exp(\beta_1) < 1$ you have a decrease in time (and an implied increase in risk)
 
+For Proportional Hazards models
 
+Y=hazard(time), so if $exp(\beta_1) > 1$, you have an increase in hazard (and a decrease in duration), if $exp(\beta_1) < 1$ you have a decrease in hazard (and an increase in duration)
+
+## Data example
 This example will illustrate how to fit parametric hazard models to continuous duration data (i.e. person-level data). In this example, I use the *time between the first and second birth* for women in the data as the _outcome variable_. 
 
 
@@ -167,7 +191,8 @@ library(muhaz)
 library(eha)
 
 #load the data
-model.dat<-read_dta("~/Google Drive/classes/dem7223/dem7223_19/data/zzir62dt/ZZIR62FL.DTA")
+model.dat<-read_dta("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
+model.dat<-zap_labels(model.dat)
 
 ```
 
@@ -182,7 +207,7 @@ I also select only non-twin births (`b0 == 0`).
 
 The DHS provides the dates of when each child was born in Century Month Codes. 
 
-To get the interval for women who *acutally had* a second birth, that is the difference between the CMC for the first birth `b3_01` and the second birth `b3_02`, but for women who had not had a second birth by the time of the interview, the censored time between births is the difference between `b3_01` and `v008`, the date of the interview.
+To get the interval for women who *actually had* a second birth, that is the difference between the CMC for the first birth `b3_01` and the second birth `b3_02`, but for women who had not had a second birth by the time of the interview, the censored time between births is the difference between `b3_01` and `v008`, the date of the interview.
 
 We have `r as.numeric(table(is.na(model.dat$bidx_01))[1])` women who are at risk of a second birth.
 
@@ -264,9 +289,9 @@ rep.des<-as.svrepdesign(des, type="bootstrap" )
 #Fit the models
 Now we fit the models. 
 
-I use the `eha` [package](http://cran.r-project.org/web/packages/eha/index.html) to do this, since it fits parametric proportional hazard models, not accellerated failure time models. 
+I use the `eha` [package](http://cran.r-project.org/web/packages/eha/index.html) to do this, since it fits parametric proportional hazard models, not accelerated failure time models. 
 
-I prefer the interpretation of regression models on the hazard scale vs. the survival time scale. EHA is not the only package that will fit parameteric survival models, be sure you *read the documentation for the procedure you use!!* Different functions fit different parameterizations of the distributions. For example, the `survreg()` function in the `survival` library fits accelerated failure time models only.
+I prefer the interpretation of regression models on the hazard scale vs. the survival time scale. EHA is not the only package that will fit parametric survival models, be sure you *read the documentation for the procedure you use!!* Different functions fit different parameterizations of the distributions. For example, the `survreg()` function in the `survival` library fits accelerated failure time models only.
 
 ##Exponential Model
 Often the exponential model isn't directly available in packages, so we can fit a weibull model with a fixed shape parameter. This is 100% legal.
@@ -286,7 +311,7 @@ plot(fit.1)
 
 ```
 
-Which shows us what the constant hazard model looks like, it assumed the hazard is constant with respect to time, which after seeing the plots above, we know is false. We see the effects of both woman's and partner's education are negative, which makes sense. Women with more education, and who have partners with more education lower risks of having a second birth. We also see the age effect is significant, meaning older women in this sample are more likely to have a second birthm but the hazard doesn't go up forever, as the curvilinear term shows a negative slope. 
+Which shows us what the constant hazard model looks like, it assumed the hazard is constant with respect to time, which after seeing the plots above, we know is false. We see the effects of both woman's and partner's education are negative, which makes sense. Women with more education, and who have partners with more education lower risks of having a second birth. We also see the age effect is significant, meaning older women in this sample are more likely to have a second birth but the hazard doesn't go up forever, as the curvilinear term shows a negative slope. 
 
 ###Interpreting the model coefficients
 To interpret the effects specifically, you can use the `Exp(Coef)` column. So, for example for women who have secondary or higher education, their hazard of having a second child is `r round(as.numeric(100*(1 - exp(coef(fit.1)[1]))), 3)` lower than a woman with less than a secondary education. To get that number I do : $100* 1 - \exp(\beta_{\text{educ.high }})$
@@ -332,7 +357,7 @@ plot(fit.2, fn="haz")
 lines(fit.haz.sm, col=2)
 ```
 
-Here, we see a more realistic situation, where the hazard fucntion changes over time (Weibull allows this), but compared to the empirical hazard, the model is a very poor fit, as empirically, the hazard goes up, but then goes down. The Weibull hazard just goes up, as the model does not allow the hazard to change direction, only rate of increase (i.e. it can incraese at a slower or faster rate, but not change direction). We see the Age effects begin to go away, because the baseline hazard is accounting for the age effects on fertility.
+Here, we see a more realistic situation, where the hazard function changes over time (Weibull allows this), but compared to the empirical hazard, the model is a very poor fit, as empirically, the hazard goes up, but then goes down. The Weibull hazard just goes up, as the model does not allow the hazard to change direction, only rate of increase (i.e. it can increase at a slower or faster rate, but not change direction). We see the Age effects begin to go away, because the baseline hazard is accounting for the age effects on fertility.
 
 ##Note on exponential and Weibull models AFT vs PH parameterization
 and, as a nice trick for the exponential and weibull models, you can rescale the AFT beta's to PH model betas (see [here](http://www.statisticsmentor.com/2012/12/25/r-relationship-between-accelerated-failure-model-and-the-proportional-hazard-model-for-weibull/))
@@ -473,13 +498,15 @@ In this example, we will examine how to fit the parametric model to a longitudin
 
 First we load our data
 ```{r}
-load("~/Google Drive/classes/dem7223/dem7223_19/data/eclsk_k5.Rdata")
+eclskk5<-readRDS("/mnt/c/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_20//data/eclskk5.rds")
 names(eclskk5)<-tolower(names(eclskk5))
 #get out only the variables I'm going to use for this example
 myvars<-c( "childid","x_chsex_r", "x_raceth_r", "x1kage_r","x4age", "x5age", "x6age", "x7age", "x2povty","x4povty_i", "x6povty_i", "x8povty_i","x12par1ed_i", "s2_id", "w6c6p_6psu", "w6c6p_6str", "w6c6p_20")
 eclskk5<-eclskk5[,myvars]
 
+```
 
+```{r}
 eclskk5$age1<-ifelse(eclskk5$x1kage_r==-9, NA, eclskk5$x1kage_r/12)
 eclskk5$age2<-ifelse(eclskk5$x4age==-9, NA, eclskk5$x4age/12)
 #for the later waves, the NCES group the ages into ranges of months, so 1= <105 months, 2=105 to 108 months. So, I fix the age at the midpoint of the interval they give, and make it into years by dividing by 12
