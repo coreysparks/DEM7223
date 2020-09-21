@@ -11,6 +11,8 @@ output:
     fig_width: 7
     toc: yes
     toc_float: yes
+  pdf_document:
+    toc: yes
 ---
 
 ## Regression modeling of duration data
@@ -101,7 +103,7 @@ $$h_i(t,x_i) = \gamma exp(x'\beta) t^{\gamma-1}$$
 You notice that $\theta$ is replaced with the mean function in the second equation.
 The Weibull is a much more flexible distribution, and the shape of the hazard function change as $\gamma$ changes. 
 
-![](/mnt/c/Users/ozd504/Documents/Github/DEM7223/images/weibull.png)
+![](C:/Users/ozd504/Documents/Github/DEM7223/images/weibull.png)
 
 * Log-normal - another 2 parameter distribution, yes, the log of the Normal distribution. Strictly positive. Hazard function is this monster:
 
@@ -135,17 +137,18 @@ Parsimony is the backbone of science!
 
 ### More on the exponential model
 ### AFT form
-Since the exponential distribution is solely determined by the parameter, λ, and λ>0, we need a model to accommodate this.
+Since the exponential distribution is solely determined by the parameter, $\lambda$, and $\lambda >0$, we need a model to accommodate this.
+
 The exponential model can be specified two ways
 The accelerated failure time model is:
 
 $$log(T_i) = x'\beta + z_i$$
-Where the β's are regression parameters relating covariate values (the x's) to the duration time
+Where the $\beta$'s are regression parameters relating covariate values (the x's) to the duration time
 
 #### PH form
 If we treat the hazard rate, $\lambda$, as a function of the covariates and the $\beta$'s, we can write $\lambda$ as
 
-$$\lambda_i=exp^{(- x'β)}$$
+$$\lambda_i=exp^{(- x' \beta)}$$
 So the hazard rate, is given by the covariates x
 
 ### More on proportional hazards
@@ -160,8 +163,7 @@ Changes to this baseline hazard happen through the effect of $\beta_1$, or the c
 
 This is known as the *proportional hazards property*
 
-Since the hazard rate in the Exponential model is invariant with respect to time, it represents a very simplistic model
- and one that often does not occur in the real world
+Since the hazard rate in the Exponential model is invariant with respect to time, it represents a very simplistic model and one that often does not occur in the real world
 
 
 ### Be careful with interpretations!
@@ -514,7 +516,7 @@ In this example, we will examine how to fit the parametric model to a longitudin
 
 First we load our data
 ```{r}
-eclskk5<-readRDS("/mnt/c/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_20//data/eclskk5.rds")
+eclskk5<-readRDS("C:/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_20//data/eclskk5.rds")
 names(eclskk5)<-tolower(names(eclskk5))
 #get out only the variables I'm going to use for this example
 myvars<-c( "childid","x_chsex_r", "x_raceth_r", "x1kage_r","x4age", "x5age", "x6age", "x7age", "x2povty","x4povty_i", "x6povty_i", "x8povty_i","x12par1ed_i", "s2_id", "w6c6p_6psu", "w6c6p_6str", "w6c6p_20")
