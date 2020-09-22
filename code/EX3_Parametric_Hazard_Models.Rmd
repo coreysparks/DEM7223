@@ -315,7 +315,7 @@ $\text{log} \lambda = x`\beta$
 ```{r}
 #exponential distribution for hazard, here we hard code it to be
 #a weibull dist with shape ==1 
-fit.1<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(agefb/5)+age2,
+fit.1<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
              data=sub2[sub2$secbi>0,], dist="weibull", shape = 1)
 summary(fit.1)
 plot(fit.1)
@@ -451,7 +451,7 @@ For instance, given the observed hazard function above, we may break the data in
 # here I must supply the times for the "pieces" where I expect the  hazard to be constant
 fit.5<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
              data=sub2[sub2$secbi>0,], dist="pch",
-             cuts=c(30, 80, 150,250))
+             cuts=seq(1, 300, 12))
 summary(fit.5)
 plot(fit.5)
 
@@ -601,7 +601,7 @@ fitl2<-phreg(Surv(time = time, event = povtran)~mlths+mgths+race_rec, data=e.lon
 summary(fitl2)  
 
 #Piecewise constant
-fitl3<-phreg(Surv(time = time, event = povtran)~mlths+mgths+race_rec,data=e.long, dist = "pch", cuts=c(1))
+fitl3<-phreg(Surv(time = time, event = povtran)~mlths+mgths+race_rec,data=e.long, dist = "lognormal")
 summary(fitl3)  
 
 #AIC for exponential
