@@ -1,10 +1,16 @@
 ---
 title: "DEM 7223 - Event History Analysis - Cox Proportional Hazards Model Part 1"
-author: '[Corey S. Sparks, PhD](https://coreysparks.github.io)'
+author:
+- name: '[Corey S. Sparks, PhD](https://coreysparks.github.io)'
+  affiliation: '[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)'
 date: "September 28, 2020"
-output: 
-  pdf_document: 
+output:
+  html_document:
+    df_print: paged
+    fig_height: 7
+    fig_width: 7
     toc: yes
+    toc_float: yes
 ---
 
 # Notes
@@ -16,7 +22,7 @@ When considering a parametric hazard model, we saw that the choice of the specif
 
 * So by saying this, we force our data to correspond to the distribution we specify.
 
-* What if, however, the distribution of the durations do not necessarily follow one of the parametric familes?  We are then left with the most heinous of statistical quandaries: model mis-specification :(
+* What if, however, the distribution of the durations do not necessarily follow one of the parametric families?  We are then left with the most heinous of statistical quandaries: model mis-specification :(
 
  * So in considering the use of hazard models, we need to also consider the case where we cannot (or adequately) specify an appropriate parametric model, this is the reasoning behind the use of Cox's (1972) semi-parametric modeling approach.
 
@@ -38,12 +44,12 @@ $$ h(t) = h_0 (t) exp^{(x' \beta)}$$
  
  * In the Cox model the baseline hazard rate, $h_0$ is the observed empirical hazard rate for individuals in the baseline, or reference group of the sample. 
  
- * For any two individials with different values of a covariate, $x$, the *hazard ratio* is:
+ * For any two individuals with different values of a covariate, $x$, the *hazard ratio* is:
  
  $$ \frac{h_i(t)}{h_0(t)} = exp(\beta (x_i - x_0))$$
 so when $x_i = 0, x_0 = 0$, the hazard ratio is just $exp(\beta)$
 
-This is called a *semi-parametric model* becuase, while the baseline hazard rate $h_0$ does not have any structural parameters, the regression effects, $\beta$ are estimated.
+This is called a *semi-parametric model* because, while the baseline hazard rate $h_0$ does not have any structural parameters, the regression effects, $\beta$ are estimated.
 
 
 ## Partial likelihood for the Cox Model
@@ -68,7 +74,7 @@ This is called a *semi-parametric model* becuase, while the baseline hazard rate
  
  $$Pr(t_j = T_i |R(t_i)) = \frac{h(t_ij)}{\sum_{j \in R(t_i)} h(t_ij)}$$
  
- * Where the denomiator in this equation is summing over all individuals at risk at time $t_i$
+ * Where the denominator in this equation is summing over all individuals at risk at time $t_i$
 
  * The partial likelihood function in terms of the regression parameters is:
 
@@ -83,7 +89,7 @@ $$L_p = \prod_{\delta = 1} \frac{exp(x'\beta)}{\sum_{j \in R(t_i)} exp(x'\beta)}
  
  * This is called *Maximum Partial likelihood estimation*, and is not a true likelihood.
  
- * This is because we have not directly included the survival times of the censored cases, instead these are handled by modifying the risk set, R(tij), but not explicitly in the numerator
+ * This is because we have not directly included the survival times of the censored cases, instead these are handled by modifying the risk set, $R(t_{ij})$, but not explicitly in the numerator
  
  * Much in the way Kaplan-Meier treats censored cases
  
@@ -210,7 +216,7 @@ $$h_i=exp(\beta_1*x_1+\beta_2*x_2+...+\beta_k*x_k)$$
  * If all x's are 0, then the risk score is 1: $exp(0) = 1$
  
  * By turning "off" and "on" different x's, we ca build different risk scores for different prototypical individuals
-   - Remeber, you're only as unique as your covariate vector!
+   - Remember, you're only as unique as your covariate vector!
  * A hazard for an individual with a risk score, $y$ is:
  
  $$\hat {H}(t_{ij}) = \hat{H_0} (t_{j}) * y_i$$
@@ -231,7 +237,7 @@ $$h_i=exp(\beta_1*x_1+\beta_2*x_2+...+\beta_k*x_k)$$
 
 ![](C:/Users/ozd504/Documents/Github/DEM7223/images/surv_ex.png)
 
-![]C:/Users/ozd504/Documents/Github/DEM7223/images/H_ex.png)
+![](C:/Users/ozd504/Documents/Github/DEM7223/images/H_ex.png)
 
 
 # Data Example
@@ -361,7 +367,7 @@ The model results (`Rel.Risk`) show that children with mom's who have less than 
 ### Risk scores
 The Cox model generates a _"risk score"_ for each individual. This is just $\exp (x ` \beta)$, or the exponent of the linear predictor. These are not absolute values that have any real direct interpretation, but they are interpretable in a **relative** sense.
 
-Risk scores >1 indicate that a person has higher risk than the baseline category, while risk scores <1 have lower relative risk, compared to the baseline. If you want to intrepret these, it's necessary to have the baseline category be a meaningful "type" of person. In our example above, the baseline group would be non-Hispanic whites, with a mother who had a high school education. i.e. all _x_'s are 0. 
+Risk scores >1 indicate that a person has higher risk than the baseline category, while risk scores <1 have lower relative risk, compared to the baseline. If you want to interpret these, it's necessary to have the baseline category be a meaningful "type" of person. In our example above, the baseline group would be non-Hispanic whites, with a mother who had a high school education. i.e. all _x_'s are 0. 
 
 ```{r}
 e.long$risk<-exp(fitl1$linear.predictors)
@@ -549,7 +555,7 @@ I also select only non-twin births (`b0 == 0`).
 
 The DHS provides the dates of when each child was born in Century Month Codes. 
 
-To get the interval for women who *acutally had* a second birth, that is the difference between the CMC for the first birth `b3_01` and the second birth `b3_02`, but for women who had not had a second birth by the time of the interview, the censored time between births is the difference between `b3_01` and `v008`, the date of the interview.
+To get the interval for women who *actually had* a second birth, that is the difference between the CMC for the first birth `b3_01` and the second birth `b3_02`, but for women who had not had a second birth by the time of the interview, the censored time between births is the difference between `b3_01` and `v008`, the date of the interview.
 
 We have `r as.numeric(table(is.na(model.dat$bidx_01))[1])` women who are at risk of a second birth.
 
