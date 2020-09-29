@@ -362,6 +362,15 @@ plot(survfit(fitl1), ylim=c(.6,1), xlim=c(6, 9),
      main="Survivorship Function for Cox Regression model - Average Child")
 ```
 
+```{r}
+
+library(stargazer)
+myexp<-function(x){exp(x)}
+
+stargazer(fitl1, type="html", style="demography", apply.coef = myexp,ci = T, out = "my.html")
+```
+
+
 The model results (`Rel.Risk`) show that children with mom's who have less than a high school education have `r round(exp(coef(fitl1)[1]), 2)` times higher risk of going into poverty during this period, while children whose mother have more than a high school education are `r 1-round(exp(coef(fitl1)[2]), 2)` % less likely to enter poverty, compared to children whose mothers had a high school education. Likewise, Hispanic, Non-Hispanic black, Native American children all face higher risk of entering poverty, compared to Non-Hispanic whites. 
 
 ### Risk scores
@@ -377,6 +386,22 @@ e.long[which.max(e.long$risk),c("childid", "age_enter", "mlths", "mgths","race_r
 
 #lowest risk child
 e.long[which.min(e.long$risk),c("childid", "age_enter", "mlths", "mgths","race_rec", "risk")]
+```
+
+```{r}
+e.long<-e.long%>%
+   mutate(rrisk= round(risk, 4))%>%
+   arrange(risk)
+
+e.u<-unique(e.long$rrisk)
+e.u[order(e.u)]
+
+
+
+head(e.long[e.long$rrisk==1.0546,c("childid", "age_enter", "mlths", "mgths","race_rec", "risk")], n=20)
+
+tail(e.long[,c("childid", "age_enter", "mlths", "mgths","race_rec", "risk")], n=20)
+
 ```
 
 
