@@ -1,0 +1,443 @@
+---
+title: "DEM 7223 - Event History Analysis - Cox Proportional Hazards Model Part 2"
+author:
+- name: '[Corey S. Sparks, PhD](https://coreysparks.github.io)'
+  affiliation: '[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)'
+date: "October 5, 2020"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    df_print: paged
+    fig_height: 7
+    fig_width: 7
+    toc: yes
+    toc_float: yes
+---
+
+# Review of Cox Regression Assumptions
+
+ * Although the Cox PH model offers an attractive alternative to parametric models, especially when ties are present, the assumptions of the model need to be assessed
+
+ * The primary assumption we are concerned with are:
+
+ * The time-constant covariate effect, i.e. the effect does not vary with time
+
+ * Grambsch and Therneau (1994) derived a method for checking the proportionality assumption for the Cox model using the residuals from the Cox model fit
+
+* First we need to look at the various kinds of residuals from the Cox model and their properties
+
+## Cox Model Residuals
+
+
+The basic principle for the construction of residuals is:
+
+ * Observed value – Predicted value
+ 
+ * This lets you get an idea of how well you are modeling your data with your covariates
+
+ * In hazard models, this principle is a bit more difficult because of censoring in the data, but despite this, we can define several types of model residuals  and use them to diagnose problems with the model.
+ 
+### Schoenfeld Residuals
+ 
+ * These are used to test the proportionality assumption of the model
+ 
+ * If there are $p$ covariates and $n$ observations, with observed durations, censoring indicators and covariates, then the Schoenfeld residual is defined as the observed - expected value of a covariate at a particular *failure time*
+
+ * Plotting these residuals versus time should show any time dependency in the covariate, which violates the proportionality assumption of the model.
+ 
+
+### Martingale residuals
+ * These residuals can be thought of as the difference between an expected event occurring and an actual event occurring
+ 
+ * These use the censoring indicator for each observation and the estimate of the cumulative hazard function
+ 
+ * These residuals are given by:
+ 
+ $$M_i(t) = \delta_i(t) – H_i(t)$$
+
+ * Where $H_i(t)$ is the cumulative hazard function
+
+ * This residual is derived from counting process theory and represents the difference between the observed count of failures at any time, minus those that are predicted by the cumulative hazard function.
+ 
+ * Martingale residuals are also useful for assessing the functional form of a covariate
+ 
+ * Meaning, is the effect linear or quadratic
+
+ * A plot of the martingale residuals against the values of the covariate will indicate if the covariate is being modeled correctly
+
+ * If a line fit to these residuals is a straight line, then the covariate has been modeled effectively, if it is curvilinear, you may need to enter the covariate as a quadratic
+ 
+ * This is usually not a problem for binary covariates
+
+### Testing non-proportional effects
+ * As mentioned before, Grambsch and Therneau (1994) derived a method for checking the proportionality assumption for the Cox model using the residuals from the Cox model fit
+ 
+ * Now that we know what these residuals are, we can see the test
+
+ * Their test is equivalent to regressing the Schoenfeld residual on time for each covariate
+
+ * If there is a significant trend (correlation) between the residual and time, then non-proportionality is likely.
+
+## Model stratification
+ * One common method for dealing with non proportionality of hazards is via model stratification.
+ 
+ * If one of the covariates exhibits non-proportionality we can re-specify the model so that each group will have its own baseline hazard rate
+ 
+ * The effect of the other covariates in the model is assumed to behave the same in both groups! 
+
+ * This creates the model:
+ 
+ $$h_{is} (t) = h_{0s} exp(x'\beta)$$
+ 
+ * which allows for different baseline hazard rates for each of the  $s$ strata, which should control for their unequal hazards of experiencing the event.
+ 
+ * This procedure is slightly different than fitting separate models for each level of the stratification variable
+ 
+ * This method will allow the effects of the covariates to vary between strata
+
+ * Unfortunately, when we split the data and run separate models for each level, we lose the ability to discuss “between level” effects, since each analysis is run on a different sample
+ 
+ 
+## Data examples
+
+This example will illustrate how to examine the fit of the Cox Proportional hazards model to a discrete-time (longitudinal) data set and examine various model diagnostics to evaluate the overall model fit. The data example uses data from the [ECLS-K ](http://nces.ed.gov/ecls/kinderdatainformation.asp). Specifically, we will examine the transition into poverty between kindergarten and third grade. 
+
+```{r load}
+options( "digits"=4)
+#Load required libraries
+library(foreign)
+library(survival)
+library(car)
+library(survey)
+library(muhaz)
+
+```
+
+## Using Longitudinal Data
+As in the other examples, I illustrate fitting these models to data that are longitudinal, instead of person-duration. In this example, we will examine how to fit the Cox model to a longitudinally collected data set. 
+
+First we load our data
+
+```{r}
+eclskk5<-readRDS("C:/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_20//data/eclskk5.rds")
+names(eclskk5)<-tolower(names(eclskk5))
+#get out only the variables I'm going to use for this example
+myvars<-c( "childid","x_chsex_r", "x_raceth_r", "x1kage_r",
+           "x4age", "x5age", "x6age", "x7age",
+           "x2povty","x4povty_i", "x6povty_i",
+           "x8povty_i","x12par1ed_i", "s2_id",
+           "w6c6p_6psu", "w6c6p_6str", "w6c6p_20")
+eclskk5<-eclskk5[,myvars]
+
+
+eclskk5$age1<-ifelse(eclskk5$x1kage_r==-9, NA, eclskk5$x1kage_r/12)
+eclskk5$age2<-ifelse(eclskk5$x4age==-9, NA, eclskk5$x4age/12)
+#for the later waves, the NCES group the ages into ranges of months, so 1= <105 months, 2=105 to 108 months. So, I fix the age at the midpoint of the interval they give, and make it into years by dividing by 12
+eclskk5$age3<-ifelse(eclskk5$x5age==-9, NA, eclskk5$x5age/12)
+
+eclskk5$pov1<-ifelse(eclskk5$x2povty==1,1,0)
+eclskk5$pov2<-ifelse(eclskk5$x4povty_i==1,1,0)
+eclskk5$pov3<-ifelse(eclskk5$x6povty_i==1,1,0)
+
+#Recode race with white, non Hispanic as reference using dummy vars
+eclskk5$race_rec<-Recode (eclskk5$x_raceth_r,
+                          recodes="1 = 'nhwhite';2='nhblack';3:4='hispanic';5='nhasian'; 6:8='other';-9=NA", as.factor = T)
+eclskk5$race_rec<-relevel(eclskk5$race_rec, ref = "nhwhite")
+eclskk5$male<-Recode(eclskk5$x_chsex_r, recodes="1=1; 2=0; -9=NA")
+eclskk5$mlths<-Recode(eclskk5$x12par1ed_i, recodes = "1:2=1; 3:9=0; else = NA")
+eclskk5$mgths<-Recode(eclskk5$x12par1ed_i, recodes = "1:3=0; 4:9=1; else =NA") 
+
+```
+
+
+Now, I need to form the transition variable, this is my event variable, and in this case it will be 1 if a child enters poverty between the first wave of the data and the third grade wave, and 0 otherwise.
+
+**NOTE** I need to remove any children who are already in poverty age wave 1, because they are not at risk of experiencing **this particular** transition. Again, this is called forming the *risk set*
+
+```{r}
+eclskk5<-subset(eclskk5, is.na(pov1)==F&is.na(pov2)==F&is.na(pov3)==F&is.na(age1)==F&is.na(age2)==F&is.na(age3)==F&pov1!=1)
+```
+
+Now we do the entire data set. To analyze data longitudinally, we need to reshape the data from the current "wide" format (repeated measures in columns) to a "long" format (repeated observations in rows). The `reshape()` function allows us to do this easily. It allows us to specify our repeated measures, time varying covariates as well as time-constant covariates.
+
+```{r}
+e.long<-reshape(data.frame(eclskk5), idvar="childid", varying=list(c("age1","age2"),
+               c("age2", "age3")),
+                v.names=c("age_enter", "age_exit"),
+                times=1:2, direction="long" )
+e.long<-e.long[order(e.long$childid, e.long$time),]
+
+e.long$povtran<-NA
+
+e.long$povtran[e.long$pov1==0&e.long$pov2==1&e.long$time==1]<-1
+e.long$povtran[e.long$pov2==0&e.long$pov3==1&e.long$time==2]<-1
+
+e.long$povtran[e.long$pov1==0&e.long$pov2==0&e.long$time==1]<-0
+e.long$povtran[e.long$pov2==0&e.long$pov3==0&e.long$time==2]<-0
+
+#find which kids failed in earlier time periods and remove them from the second & third period risk set
+failed1<-which(is.na(e.long$povtran)==T)
+e.long<-e.long[-failed1,]
+
+
+e.long$age1r<-round(e.long$age_enter, 0)
+e.long$age2r<-round(e.long$age_exit, 0)
+e.long$time_start<-e.long$time-1
+head(e.long[, c("childid","time_start" ,
+                "time", "age_enter", "age_exit",
+                "pov1", "pov2", "pov3","povtran", "mlths")], n=10)
+
+```
+
+
+### Construct survey design and fit basic Cox model
+
+Now we fit the Cox model using full survey design. In the ECLS-K, I use the longitudinal weight for waves 1-7, as well as the associated psu and strata id's for the longitudinal data from these waves from the parents of the child, since no data from the child themselves are used in the outcome.
+
+```{r fitmodel}
+options(survey.lonely.psu = "adjust")
+
+library(dplyr)
+e.long<-e.long%>%
+  filter(complete.cases(w6c6p_6psu, race_rec, mlths))
+
+des2<-svydesign(ids = ~w6c6p_6psu,
+                strata = ~w6c6p_6str,
+                weights=~w6c6p_20, 
+                data=e.long,
+                nest=T)
+
+#Fit the model
+fitl1<-svycoxph(Surv(time = time_start, time2=time, event = povtran)~mlths+race_rec, design=des2)
+summary(fitl1) 
+```
+
+### Model Residuals
+There are several types of residuals for the Cox model, and they are used for different purposes. 
+
+First, we will extract the *Shoenfeld* residuals, which are useful for examining non-proportional hazards with respect to time. This means that the covariate effect could exhibit time-dependency. 
+
+First we extract the residuals from the model, then we fit a linear model to the residual and the observed (uncensored) failure times
+
+### WE DO NOT WANT TO SEE A SIGNIFICANT MODEL HERE!!!!!
+
+that would indicate dependence between the residual and outcome, or *nonpropotionality*, similar to doing a test for heteroskedasticity in OLS
+
+```{r schoneresd}
+schoenresid<-resid(fitl1, type="schoenfeld")
+
+fit.sr<-lm(schoenresid~des2$variables$time[des2$variables$povtran==1])
+summary(fit.sr)
+```
+
+From these results, it appears that the `mlths` variable is correlated with the timing of transition, while the other variables are constant over **time**
+
+*Not so soon*
+
+We can also get a formal test using weighted residuals in a nice pre-rolled form with a plot, a la [Grambsch and Therneau (1994)](http://biomet.oxfordjournals.org/content/81/3/515.short) :
+
+```{r coxzph, fig.width=9, fig.height=8}
+fit.test<-cox.zph(fitl1)
+fit.test
+par(mfrow=c(3,3))
+plot(fit.test, df=2)
+par(mfrow=c(1,1))
+```
+
+Here, we see that opposite, with no significant relationship detected by the formal test. **This is what you want to see**. 
+
+Next we examine Martingale residuals. Martingale residuals are also useful for assessing the functional form of a covariate. A plot of the martingale residuals against the values of the covariate will indicate if the covariate is being modeled correctly, i.e. linearly in the Cox model. If a line fit to these residuals is a straight line, then the covariate has been modeled effectively, if it is curvilinear, you may need to enter the covariate as a quadratic, although this is not commonly a problem for dummy variables.
+
+```{r, message=FALSE, warning=FALSE}
+#extract Martingale residuals
+res.mar<-resid(fitl1, type="martingale")
+
+#plot vs maternal education
+scatter.smooth(des2$variables$mlths, res.mar,degree = 2,
+               span = 1, ylab="Martingale Residual",
+               col=1,  cex=.5, lpars=list(col = "red", lwd = 3))
+title(main="Martingale residuals for Mother' < High School's Education")
+
+```
+
+Which shows nothing in the way of nonlinearity in this case.
+
+### Stratification
+Above, we observed evidence of non-proportional effects by education. There are a few standard ways of dealing with this in practice. The first is *stratification* of the model by the offending predictor. If one of the covariates exhibits non-proportionality we can re-specify the model so that each group will have its own baseline hazard rate. This is direct enough to do by using the `strata()` function within a model. This is of best use when a covariate is categorical, and not of direct importance for our model (i.e. a control variable).
+
+```{r stratification, fig.height=7, fig.width=9}
+fitl2<-svycoxph(Surv(time = time_start, time2 = time, event = povtran)~race_rec+strata(mlths),
+                design=des2)
+summary(fitl2) 
+
+
+```
+
+
+### Non-proportional effects with time
+We can also include a time by covariate interaction term to model directly any time-dependence in the covariate effect. Different people say to do different things, some advocate for simply interacting time with the covariate, others say use a nonlinear function of time, e.g. log(time) `*` the covariate, others say use time-1 `*` covariate, which is called the "heavy side function", according to Mills. 
+
+In this example, time is so limited that it doesn't make sense to do this.
+
+
+## ANOVA like tests for factors
+You can use the `regTermTest()` function in the `survey()` package to do omnibus tests for variation across a factor variable.
+
+```{r time effect}
+
+fit3<-svycoxph(Surv(time = time_start, time2=time, event = povtran)~mlths+race_rec,
+               design=des2)
+summary(fit3)
+
+regTermTest(fit3, ~mlths, method="LRT")
+regTermTest(fit3, ~race_rec, method="LRT")
+```
+
+
+## DHS data example
+
+```{r, message=F}
+library(haven)
+#load the data
+model.dat<-read_dta("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
+model.dat<-zap_labels(model.dat)
+
+```
+
+
+In the DHS individual recode file, information on every live birth is collected using a retrospective birth history survey mechanism.  
+
+Since our outcome is time between first and second birth, we must select as our risk set, only women who have had a first birth. 
+
+The `bidx` variable indexes the birth history and if `bidx_01` is not missing, then the woman should be at risk of having a second birth (i.e. she has had a first birth, i.e. `bidx_01==1`). 
+
+I also select only non-twin births (`b0 == 0`). 
+
+The DHS provides the dates of when each child was born in Century Month Codes. 
+
+To get the interval for women who *actually had* a second birth, that is the difference between the CMC for the first birth `b3_01` and the second birth `b3_02`, but for women who had not had a second birth by the time of the interview, the censored time between births is the difference between `b3_01` and `v008`, the date of the interview.
+
+We have `r as.numeric(table(is.na(model.dat$bidx_01))[1])` women who are at risk of a second birth.
+
+```{r}
+table(is.na(model.dat$bidx_01))
+#now we extract those women
+sub<-subset(model.dat, model.dat$bidx_01==1&model.dat$b0_01==0)
+
+#Here I keep only a few of the variables for the dates, and some characteristics of the women, and details of the survey
+sub2<-data.frame(CASEID=sub$caseid, 
+                 int.cmc=sub$v008,
+                 fbir.cmc=sub$b3_01,
+                 sbir.cmc=sub$b3_02,
+                 marr.cmc=sub$v509,
+                 rural=sub$v025,
+                 educ=sub$v106,
+                 age=sub$v012,
+                 partneredu=sub$v701,
+                 partnerage=sub$v730,
+                 weight=sub$v005/1000000,
+                 psu=sub$v021, strata=sub$v022)
+
+sub2$agefb = (sub2$age - (sub2$int.cmc - sub2$fbir.cmc)/12)
+```
+
+
+Now I need to calculate the birth intervals, both observed and censored, and the event indicator (i.e. did the women *have* the second birth?)
+
+```{r}
+sub2$secbi<-ifelse(is.na(sub2$sbir.cmc)==T,
+                   ((sub2$int.cmc))-((sub2$fbir.cmc)),
+                   (sub2$fbir.cmc-sub2$sbir.cmc))
+sub2$b2event<-ifelse(is.na(sub2$sbir.cmc)==T,0,1) 
+```
+
+### Create covariates
+Here, we create some predictor variables: Woman's education (secondary +, vs < secondary), Woman's age^2, Partner's education (> secondary school)
+```{r}
+
+sub2$educ.high<-ifelse(sub2$educ %in% c(2,3), 1, 0)
+sub2$age2<-(sub2$agefb)^2
+sub2$partnerhiedu<-ifelse(sub2$partneredu<3,0,
+                          ifelse(sub2$partneredu%in%c(8,9),NA,1 ))
+
+options(survey.lonely.psu = "adjust")
+des<-svydesign(ids=~psu, strata=~strata,
+               data=sub2[sub2$secbi>0,], weight=~weight )
+
+```
+
+### Fit the model
+```{r model}
+#use survey design
+des<-svydesign(ids=~psu, strata = ~strata , weights=~weight, data=sub2[is.na(sub2$partnerhiedu)==F,])
+
+cox.s<-svycoxph(Surv(secbi,b2event)~educ.high+partnerhiedu+agefb+age2,
+                design=des)
+summary(cox.s)
+
+cox.s2<-svycoxph(Surv(secbi,b2event)~educ.high+partnerhiedu+agefb+age2,
+                 design=des)
+summary(cox.s2)
+
+
+#Schoenfeld test
+fit.test<-cox.zph(cox.s)
+fit.test
+
+plot(fit.test, df=2)
+
+
+#martingale residuals
+#extract Martingale residuals
+res.mar<-resid(cox.s, type="martingale")
+
+#plot vs maternal age
+scatter.smooth(des$variables$agefb, res.mar,degree = 2,
+               span = 1, ylab="Martingale Residual",
+               col=1,  cex=.25, lpars=list(col = "red",
+                                           lwd = 3))
+title(main="Martingale residuals for Mother Age' ")
+
+```
+
+### Non-proportional effects with time
+We can also include a time by covariate interaction term to model directly any time-dependence in the covariate effect. Different people say to do different things, some advocate for simply interacting time with the covariate, others say use a nonlinear function of time, e.g. log(time) `*` the covariate, others say use time-1 `*` covariate, which is called the "heavy side function", according to Mills.  Mills cites Allison, in saying that, to interpret the heavy side function, you go with the rule : "If $\beta_2$ is positive, then the effect of the covariate x increases over time, while if $\beta_2$ is negative, the effect of x decreases over time."
+
+```{r}
+sub.split<-survSplit(Surv(secbi, b2event)~., 
+                     data= sub2[sub2$secbi>0,], cut=36, episode = "timegroup")
+sub.split<-sub.split[order(sub.split$CASEID, sub.split$timegroup),]
+
+sub.split$hv1<-sub.split$agefb*(1-sub.split$timegroup)
+sub.split$hv2<-sub.split$agefb*(sub.split$timegroup)
+
+head(sub.split, n=20)
+
+des3<-svydesign(ids=~psu, strata = ~strata ,
+                weights=~weight, data=sub.split[is.na(sub.split$partnerhiedu)==F,]) 
+
+cox.s2<-svycoxph(Surv(secbi,b2event)~educ.high+partnerhiedu+hv1+hv2,
+                 design=des3)
+summary(cox.s2)
+
+```
+
+So, for us $\beta_2$ in the heavyside function is positive, suggesting that the age effect increase over time
+
+
+## Aalen's additive regression model
+An alternative model proposed by Odd Aalen in [1989](https://onlinelibrary.wiley.com/doi/pdf/10.1002/sim.4780080803?casa_token=plB_dbGBb9MAAAAA%3A-mQHHsqFQaxk9F08JK8IB_O1N0wUESAPs97x2zXRWmUwYDP4uXabyhF52zYNIfgCEf8ZnnsKQAxINQ&) and [1993](https://onlinelibrary.wiley.com/doi/pdf/10.1002/sim.4780121705?casa_token=RSuuil1k2Q4AAAAA:JhgJVsbf_OZ688ClvLHSfPih6bTTIqgrTr9-MWgS7OOIMYAGPnieYrEkSbbHmOCX9v9Iy6GmmcZ7PQ) describe a model that is inherently nonparametric and models the changes in relationships in a hazard model. 
+
+```{r}
+fita<-aareg(Surv(secbi,b2event)~educ.high+partnerhiedu+agefb+age2+cluster(strata),
+            sub2, weights = weight)
+
+summary(fita)
+
+library(ggfortify)
+autoplot(fita)
+```
+
+
+What is seen in the plots are the time-varying coefficients of the hazard model. For example the effect of `educ.high` is globally negative, suggesting higher education decreases the hazard, as we saw in the Cox model above. In the plot, the regression function initially decreases sharply but then plateaus, suggesting the education effect is really only time varying until about 100 months after the first birth. 

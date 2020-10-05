@@ -679,7 +679,7 @@ Now we look at some more plots we can examine from the models
 #Now we look at the cumulative hazard functions
 sf1<-survfit(fit.cox2)
 sf2<-survfit(fit.cox2,
-             newdata=data.frame(educ.high=0, partnerhiedu=0, age=30, age2=900))
+             newdata=data.frame(educ.high=mean(sub2$educ.high), partnerhiedu=0, age=mean(sub2$age), age2=mean(sub2$age2)))
 sf3<-survfit(fit.cox2,
              newdata=data.frame(educ.high=1, partnerhiedu=0, age=30, age2=900))
 
@@ -689,7 +689,12 @@ H1<--log(sf1$surv)
 H2<--log(sf2$surv)
 H3<--log(sf3$surv)
 
-times<-sf1$time
+test<-data.frame(H=c(H1, H2, H3), group=c(rep("mean",length(H1)), rep( "hr", length(H1)), rep("lowr",length(H1))), times=sf1$time)
+
+
+
+test%>%
+   ggplot(aes(x=times, y=H))+geom_line(aes(group=group, color=group))+xlim(12,24)+ylim(0, .5)
 
 plot(H1~times, type="s",  ylab="H(t)",ylim=c(0, 6), xlab="Months")
 lines(H2~times,col="red", type="s")
