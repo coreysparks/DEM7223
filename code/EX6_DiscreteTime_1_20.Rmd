@@ -47,6 +47,19 @@ output:
  * We have already done this with the piecewise-constant hazard model
  
  * There we specified arbitrary breaks, now we specify more structured time periods
+ 
+```{r, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+t3<-data.frame(ID=c(rep(1, 5), rep(2, 2), rep(3, 9), rep(4, 6)),
+                    Period = c(seq(1:5), seq(1:2), seq(1:9), seq(1:6)),
+                    Event=c(0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
+t3%>%
+  kable()%>%
+  column_spec(1:3, border_left = T, border_right = T)%>%
+  kable_styling(row_label_position = "c", position = "center" )
+```
 
 ## Constructing Hazards for each period
 
