@@ -59,6 +59,13 @@ t3%>%
   kable()%>%
   column_spec(1:3, border_left = T, border_right = T)%>%
   kable_styling(row_label_position = "c", position = "center" )
+
+t3%>%
+  group_by(Period)%>%
+  summarise(haz=mean(Event))
+
+
+dat<-model.matrix(Event ~ factor(Period)-1, data=t3)
 ```
 
 ## Constructing Hazards for each period
@@ -114,7 +121,7 @@ $$logit(h(t))=[\alpha_1 D_1 + \alpha_2 D_2 +...+\alpha_t D_T]+x'\beta $$
 $$\text{if x=1}: logit(h(t))=[\alpha_1 D_1 + \alpha_2 D_2 +...+\alpha_t D_T]+[ \beta_1 x_1]$$
 
 
-$$\text{if x=1}: logit(h(t))=[\alpha_1 D_1 + \alpha_2 D_2 +...+\alpha_t D_T]$$
+$$\text{if x=0}: logit(h(t))=[\alpha_1 D_1 + \alpha_2 D_2 +...+\alpha_t D_T]$$
 
  * So when x=1 the entire hazard is increased (or decreased) by the constant, $\beta$.
 
@@ -299,9 +306,14 @@ while the choice of link function generally has no effect on predictions, the in
 
 ```{r}
 #Fit the model
-fitl1<-svyglm(povtran~as.factor(time_start)+mlths+race_rec-1,
-              design=des2, family=binomial(link="cloglog"))
+fitl1<-glm(povtran~as.factor(time_start)-1,
+              e.long, family=binomial)
 summary(fitl1)
+
+1/(1+exp(-coef(fitl1)))
+
+library(questionr)
+aggregate(povtran~factor(time_start),data=e.long, FUN=mean)
 
 #make a Hazard ratio
 sums<-data.frame(round(summary(fitl1)$coef, 3))
@@ -414,7 +426,7 @@ R provides a useful function called `survSplit()` in the `survival` library that
 ```{r}
 #make person period file
 pp<-survSplit(Surv(secbi, b2event)~. , data = sub2[sub2$secbi>0,],
-              cut=c(0,12, 24, 36, 48, 60, 72),  episode="year_birth")
+              cut=seq(0,360, 12),  episode="year_birth")
 
 pp$year <- pp$year_birth-1
 pp<-pp[order(pp$CASEID, pp$year_birth),]
