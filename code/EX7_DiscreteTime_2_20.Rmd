@@ -218,6 +218,8 @@ for(i in 2:length(haz)){
 }
 
 
+St<-c(1, St)
+time<-c(0, time)
 plot(y=St,x=time, type="l", main="Survival function for second birth interval")
 ```
 
@@ -228,6 +230,17 @@ Here, we can specify how we want time in our model. The general model fits a haz
 We can, however, specify time as a linear or quadratic term, and the model will not fit separate hazards at all times, instead, the baseline hazard will be a linear or curvilinear function of time.
 
 ```{r}
+#Linear term for time
+fit.0<-svyglm(b2event~1,design=des , family="binomial")
+summary(fit.0)
+
+1/(1+exp(-coef(fit.0)))
+```
+
+
+```{r}
+
+
 #Linear term for time
 fit.l<-svyglm(b2event~year,design=des , family="binomial")
 summary(fit.l)
