@@ -1,0 +1,181 @@
+---
+title: "Haitian DHS INLA"
+author: "Corey Sparks PhD"
+date: "11/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load, message=FALSE, warning=FALSE}
+#Load required libraries
+library(foreign)
+library(survival)
+library(car)
+library(survey)
+library(coxme)
+library(knitr)
+library(lme4)
+library(car)
+library(INLA)
+library(sf)
+library(spdep)
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+```{r}
+#load the data
+model.dat<-readRDS("~/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_20/data/ht_data/htbr71sd.rds")
+names(model.dat)<-tolower(names(model.dat))
+
+sub<-data.frame(CASEID=model.dat$caseid,v008=model.dat$v008,bord=model.dat$bidx,
+                csex=model.dat$b4,b2=model.dat$b2, b3=model.dat$b3, b5=model.dat$b5,
+                b7=model.dat$b7, ibint=model.dat$b11, rural=model.dat$v025,
+                educ=model.dat$v106,age=model.dat$v012,partneredu=model.dat$v701,
+                partnerage=model.dat$v730, hhses=model.dat$v190,
+                weight=model.dat$v005/1000000, psu=model.dat$v021, 
+                strata=model.dat$v022, region=model.dat$v023)
+
+sub$death.age<-ifelse(sub$b5==1,
+                          ((((sub$v008))+1900)-(((sub$b3))+1900)) 
+                          ,sub$b7)
+
+#censoring indicator for death by age 5, in months (<=60 months)
+sub$d.event<-ifelse(is.na(sub$b7)==T|sub$b7>60,0,1)
+sub$d.eventfac<-factor(sub$d.event);
+levels(sub$d.eventfac)<-c("Alive at Age 5", "Dead by Age 5")
+table(sub$d.eventfac)
+
+#recodes
+sub$male<-ifelse(sub$csex==1,1,0)
+sub$educ.high<-ifelse(sub$educ %in% c(2,3), 1, 0)
+sub$age2<-sub$age^2
+sub$partnerhiedu<-ifelse(sub$partneredu<3,0,
+                         ifelse(sub$partneredu%in%c(8,9),NA,1 ))
+
+```
+
+```{r}
+geodat<-readRDS("~/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_20/data/ht_data/htgeo_wcov.rds")
+
+geodat<-st_transform(geodat, crs = 32618)
+plot(geodat["Wet_Days_2000"])
+geodat$struct<-1:nrow(geodat)
+
+
+nbs<-knearneigh(coordinates(as_Spatial(geodat)))
+nbs<-knn2nb(nbs, row.names = geodat$struct, sym=T)
+nb2INLA(nbs, file="haiti.gra")
+C<-nb2mat(nbs, style = "B")
+C<-forceSymmetric(C)
+
+
+mat <- nb2mat(nbs, style="B",zero.policy=TRUE)
+colnames(mat) <- rownames(mat) 
+mat <- as.matrix(mat[1:dim(mat)[1], 1:dim(mat)[1]])
+
+
+mdat<- dplyr::left_join(sub, geodat, by=c("psu" = "DHSCLUST.x"))
+```
+
+
+
+### Fit the ordinary Cox model
+Here I fit the ordinary Cox model without frailty, just for comparison sake. 
+
+```{r model}
+#using coxph in survival library
+fit.cox2<-coxph(Surv(death.age, d.event)~I(bord>2)+male+educ.high+I(age/5)+factor(hhses),
+                data=mdat,cluster = mdat$strata, weights=weight)
+summary(fit.cox2)
+plot(survfit(fit.cox2),  ylim=c(.8,1), xlim=c(0,60),
+     ylab="S(t)", xlab="Age in Months")
+title(main="Survival Function for Child Mortality")
+```
+
+```{r}
+#mdat<-mdat[mdat$death.age<=60,]
+rm(model.dat, sub);gc()
+sf<-survfit(Surv(mdat$death.age,mdat$d.event)~1)
+plot(sf)
+
+#inla.setOption("enable.inla.argument.weights", TRUE)
+mdat$death.age<-mdat$death.age+.0001
+mdat2<-mdat[1:5000,]
+hsurv<-inla.surv(mdat2$death.age,mdat2$d.event)
+
+test<-inla.coxph(hsurv~1,data=mdat2)
+
+mod1<-inla(d.event ~I(bord>2)+male+educ.high+I(age/5)+factor(hhses)+f(struct, model="besag", graph ="haiti.gra" ) ,
+           data=mdat, 
+           family = "binomial", Ntrials = 1)
+
+summary(mod1)
+
+mod2<-inla(inla.surv(death.age, d.event)~I(bord>2)+male+educ.high+I(age/5)+factor(hhses),
+           data=mdat2, 
+           family = "coxph", Ntrials = 1,verbose=TRUE, quantiles = c(0.025, 0.975),
+              control.inla=list(diagonal=1000),
+              control.fixed = list(prec.intercept = 0.1),
+              control.hazard=list(model="rw1",n.intervals=20,param=c(1,0.001)))
+
+
+s1<-coxph(Surv(death.age, d.event)~I(bord>2), data=mdat2)
+library(brms)
+
+f1<-bf(death.age|cens(1-d.event)~I(bord>2) + car(M = mat, gr = struct))
+
+mod3<-brm(f1, data=mdat, data2 = list(mat=mat),
+          family="cox",
+          chains = 2, cores = 2, iter=5000, warmup = 3000, thin=10)
+
+commfrail<-exp(posterior_samples(mod3, "rcar"))
+comm_m<-apply(commfrail, 2, function(x) {mean(x>1.5)})
+
+geodat$sp_re<-comm_m
+
+library(ggplot2); library(ggspatial)
+geodat%>%
+  ggplot()+annotation_map_tile(zoom = 7)+
+  geom_sf(aes(fill=comm_m, color=comm_m))
+
+library(mapview)
+
+mapview(geodat["sp_re"], col.regions=RColorBrewer::brewer.pal(n=7, "Blues"))
+
+means<-aggregate(d.event~DHSCLUST.y, data = mdat, FUN=mean)
+
+geodat$means<-as.numeric(means$d.event)
+
+library(ggplot2); library(ggspatial)
+geodat%>%
+  ggplot()+annotation_map_tile(zoom = 7)+
+  geom_sf(aes(fill=means, color=means))
+
+
+htpoly<-st_voronoi(geodat)
+
+library(tmap)
+
+tm_shape(htpoly) +
+  tm_polygons("means", 
+              style="quantile", 
+              title="Haiti \nInfant Mortality Rates")
+
+tmap_mode("view")
+tmap_last()
+
+plot(means~sp_re, geodat)
+
+mapview(geodat, zcol =c("sp_re", "means"))
+mapview(geodat["means"])
+
+library(coxme)
+
+fit.f<-coxme(Surv(death.age, d.event)~I(bord>2)+(1|struct),
+                 data=mdat)
+
+```
+
