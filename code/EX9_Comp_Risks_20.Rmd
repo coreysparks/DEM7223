@@ -5,14 +5,14 @@ author:
   affiliation: '[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)'
 date: "November 9, 2020"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     df_print: paged
     fig_height: 7
     fig_width: 7
     toc: yes
     toc_float: yes
+  pdf_document:
+    toc: yes
 ---
 
 ## Notes
@@ -258,6 +258,18 @@ legend("bottomleft",
        lty=1, col=1:10, cex=.65)
 ```
 
+```{r}
+
+d2<- -2*fits$ll[2]
+df<-(length(coef(fits)))-length(coef(fita))
+d1-d2
+
+
+AIC(fits, fita)
+
+```
+
+
 ### Competing Risk Regression
 The `crr()` function in the `cmprsk` library uses the methods discussed in [Fine and Gray, 1999](http://amstat.tandfonline.com/doi/abs/10.1080/01621459.1999.10474144#.VRxYIjvF9v0) for regression modeling for the subdistribution function for a competing risk.  This is still a proportional hazards model for the key event of interest, but takes into account failures from other causes.
 
@@ -286,6 +298,44 @@ legend("topleft",
 title(main="Cumulative Incidence of Heart Disease Mortalty")
 
 
+```
+
+### competing risks using the multinomial model 
+```{r}
+
+pp<-survSplit(Surv(d.age, d.event)~., data=sub,
+              cut =seq(20, 100, 10))
+
+library(nnet)
+
+pp$cause<-ifelse(pp$fail1==1, "hd", 
+                 ifelse(pp$fail2==1, "can",
+                    ifelse(pp$fail3==1, "acc", 
+                        ifelse(pp$fail4==1, "other","0alive"))))
+
+fitm<-multinom(cause ~factor(tstart)+ male+married+race+college, data=pp)
+
+newd<-expand.grid(tstart = seq(20, 100, 10), male =c(0,1), married="married", race=levels(as.factor(pp$race)), college=levels(as.factor(pp$college) ))
+
+est<-predict(fitm, newd, type = "probs")
+
+est<-data.frame(est); names(est)<-c("pralive","prhd", "prcan", "pracc" , "prother" )
+
+newd<-cbind(newd, est)
+head(newd)
+
+
+library(data.table)
+library(magrittr)
+out<-melt(setDT(newd), id = c("tstart", "male", "married","race", "college"),
+          measure.vars = list(haz=c("pralive", "prhd","prcan","pracc", "prother")))
+head(out, n=20)
+
+library(ggplot2)
+
+out%>%
+  dplyr::filter(race =="wht"&college=="coll", tstart <=90)%>%
+  ggplot(aes(x=tstart, y=value,group=factor(male), color=factor(male) ))+geom_line()+facet_wrap(~variable)
 ```
 
 
