@@ -1,0 +1,4 @@
+- source: EX1_ModelData.qmd
+  quarto-pub:
+    - id: 3b6604c2-341f-4043-8415-d66cae848def
+      url: 'https://quartopub.com/sites/coreysparks/dem-7223---introduction-to-event-history-analysis-and-functions-of-survival-time'
