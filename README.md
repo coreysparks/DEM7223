@@ -1,7 +1,7 @@
 # Demography 7233
-Event History Analysis
+## Event History Analysis
 
-Fall 2022
+### Fall 2022
 
 Thursday 6-8:30  
 Instructor: Dr. Corey S. Sparks  
@@ -36,18 +36,14 @@ In Rstudio. Please have these programs downloaded and installed prior to class.
 ## Course texts:
 | **Title** | **Author** | **ISBN**| **Status** |
 | --- | --- | --- | --- |
-| Introducing Survival and Event
-History Analysis | Mills (M) | 9781848601024 | Required |
-|Applied longitudinal data
-analysis | Singer & Willett (S&W) | 97801195152968  | Required |
+| Introducing Survival and Event History Analysis | Mills (M) | 9781848601024 | Required |
+|Applied longitudinal data analysis | Singer & Willett (S&W) | 97801195152968  | Required |
 | --- | --- | --- |
 
 # Course Calendar
 | **Week** | **Date** | **Topic** | **Suggested Reading - Letters refer to numbering of textbooks** |
 | --- | --- | --- | --- |
-| 1 | 8/25 | Intro to course, Structure and preparation of event
-history data, Review of life table functions, Single and
-multiple decrement processes | M 1.1--1.3, M 3, S&W 9 |
+| 1 | 8/25 | Intro to course, Structure and preparation of event history data, Review of life table functions, Single and multiple decrement processes | M 1.1--1.3, M 3, S&W 9 |
 | 2 | 9/1 | Quantities and relationships in survival analysis | M 1.4, S&W 10 |
 | 3 | 9/8 | Nonparametric estimation of survival curves and hazard rates | M 4|
 | 4 | 9/15 | Parametric models | M 6|
