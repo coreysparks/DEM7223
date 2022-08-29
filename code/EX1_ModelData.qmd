@@ -6,6 +6,7 @@ author:
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 format: 
     html:
+      self-contained: true
       code-fold: true
       code-tools: true
       code-link: true
