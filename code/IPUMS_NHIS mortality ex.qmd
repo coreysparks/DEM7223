@@ -1,0 +1,88 @@
+---
+title: "IPUMS - NHIS Mortality Example"
+author: "Corey Sparks, PhD"
+format: 
+    html:
+      code-fold: true
+      code-tools: true
+      code-link: true
+      df-print: paged
+      self-contained: true
+editor: visual
+---
+
+This example is intended to show the basics of coding mortality and censoring using the [IPUMS NHIS](https://nhis.ipums.org/nhis/) mortality data.
+
+## Read in IPUMS IHIS extract
+
+```{r}
+library(tidyverse)
+library(ipumsr)
+```
+
+```{r}
+
+nhis <- read_ipums_ddi("C:/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_22/data/nhis_00015.xml")
+
+nhis_dat <- read_ipums_micro(nhis)
+
+nhis_dat <- haven::zap_labels(nhis_dat)
+```
+
+```{r}
+nhis_dat <- nhis_dat %>%
+  filter(MORTELIG == 1)
+```
+
+## Age at death
+
+This example shows the use of an age-at-death outcome. If the respondent died during the follow up period, their age at death is the difference between their year of mortality and their year of birth, calculated as the year of the survey minus their age.
+
+The current year of mortality follow up is **2014**, that is the censoring year for mortality
+
+```{r}
+nhis_dat <- nhis_dat %>%
+  mutate(death_age = ifelse( MORTSTAT ==1, 
+                             MORTDODY - (YEAR - AGE), 
+                             2014 - (YEAR - AGE)), 
+         d.event = ifelse(MORTSTAT == 1, 1, 0))
+
+library(survival)
+
+age_fit <- survfit(Surv(death_age, d.event) ~ 1, 
+                   data = nhis_dat)
+
+library(ggsurvfit)
+
+age_fit %>%
+  ggsurvfit() +
+  add_confidence_interval(type = "ribbon") +
+  add_quantile() 
+```
+
+## Time to death
+
+This example shows the use of a time-to-death outcome. If the respondent died within 5 years of the survey, they are coded as experiencing the event, they are otherwise censored.
+
+```{r}
+nhis_dat <- nhis_dat %>%
+  mutate(death_time = ifelse( MORTSTAT ==1, 
+                             MORTDODY - YEAR , 
+                             2014 - YEAR ), 
+         d5.event = ifelse(MORTSTAT == 1 & death_time <= 5, 1, 0))
+
+library(survival)
+
+time_fit <- survfit(Surv(death_time, d5.event) ~ 1, 
+                  conf.type = "log",
+                   data = nhis_dat)
+
+library(ggsurvfit)
+
+time_fit %>%
+  ggsurvfit()+
+  xlim(-1, 6) +
+  add_censor_mark() +
+  add_confidence_interval()+
+  add_quantile(y_value = .975) 
+```

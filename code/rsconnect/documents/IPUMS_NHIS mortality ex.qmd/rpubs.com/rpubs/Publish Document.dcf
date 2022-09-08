@@ -1,0 +1,11 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/939813/f3e3934022f1466e94ea6459efeb7968
+bundleId: https://api.rpubs.com/api/v1/document/939813/f3e3934022f1466e94ea6459efeb7968
+url: http://rpubs.com/corey_sparks/939813
+when: 1662666257.14927
+lastSyncTime: 1662666257.14928
