@@ -29,6 +29,8 @@ nhis_dat <- read_ipums_micro(nhis)
 nhis_dat <- haven::zap_labels(nhis_dat)
 ```
 
+Filter only NHIS respondents who are eligible for mortality follow up:
+
 ```{r}
 nhis_dat <- nhis_dat %>%
   filter(MORTELIG == 1)
@@ -85,4 +87,41 @@ time_fit %>%
   add_censor_mark() +
   add_confidence_interval()+
   add_quantile(y_value = .975) 
+```
+
+## Estimating the hazard function from the survival function
+
+```{r}
+
+age_fit%>%
+ broom::tidy() %>%
+  select(time, estimate) %>%
+  mutate(cumhaz = -log(estimate)) %>%
+  mutate(haz = c(0, diff(cumhaz)))%>%
+  ggplot()+
+  aes(x=time, y=haz)+
+  geom_line()
+
+```
+
+## Alternative way to get hazard 
+Remeber 
+$$h(t) = \frac{f(t)}{S(t)}$$
+
+`ggsurvfit()` will give us the $F(t)$, or the cumulative distribution function, and $f(t) = \frac{dF(t)}{dt}$, so we can use this to get the hazard function:
+
+```{r}
+p<-age_fit %>%
+  ggsurvfit(type = "risk") 
+
+test<- ggplot_build(p)$data  %>%
+  as.data.frame() %>%
+  mutate(ft = c(0, diff(y)))%>%
+  mutate(st = 1-y)%>%
+  mutate(haz = ft/st)
+
+test %>%
+  ggplot() + 
+  aes(x = x, y = ft) + 
+  geom_line()
 ```
