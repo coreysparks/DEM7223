@@ -104,9 +104,9 @@ age_fit%>%
 
 ```
 
-## Alternative way to get hazard 
-Remeber 
-$$h(t) = \frac{f(t)}{S(t)}$$
+## Alternative way to get hazard
+
+Remeber $$h(t) = \frac{f(t)}{S(t)}$$
 
 `ggsurvfit()` will give us the $F(t)$, or the cumulative distribution function, and $f(t) = \frac{dF(t)}{dt}$, so we can use this to get the hazard function:
 
@@ -124,4 +124,23 @@ test %>%
   ggplot() + 
   aes(x = x, y = ft) + 
   geom_line()
+```
+
+## Comparison to $q_x$ from life table
+
+This is the [2014 US life table](https://www.cdc.gov/nchs/data/nvsr/nvsr66/nvsr66_04.pdf) from NCHS
+
+```{r}
+uslt14<- read_csv("../data/uslt_2014.csv")
+
+test<- test%>%
+  filter(x!=0 & x>=18 & x<=100)
+
+mdat<- left_join(test, uslt14, by=c("x"="age_n"))
+
+mdat%>%
+  ggplot()+aes(x=x, y=haz) +
+  geom_line(color = "blue")+
+  ylim(0, .3)+
+  geom_line(aes(x=x, y = qx), color = "green")
 ```
