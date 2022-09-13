@@ -221,9 +221,7 @@ fit <-survfit(Surv(death.age, d.event)~highses, data=dat)
 
 fit%>%
   ggsurvfit() +
-  labs(title = "Infant mortality survival plot", subtitle = "By household SES", x = "Years", y = "Survival Probability")+
-  xlim(c(0, 12))+
-  ylim(c(.95, 1))
+  labs(title = "Infant mortality survival plot", subtitle = "By household SES", x = "Years", y = "Survival Probability")
 
 
 summary(fit)
@@ -279,7 +277,8 @@ Which shows a statistically significant difference in survival between rural and
 We can also compare the 95% survival point for rural and urban residents
 
 ```{r}
-quantile(fit2, probs=.05)
+quantile(fit2
+         , probs=.025)
 
 ```
 
@@ -424,8 +423,7 @@ eclskk5$mlths<-Recode(eclskk5$x12par1ed_i, recodes = "1:2=1; 3:9=0; else = NA")
 eclskk5$mgths<-Recode(eclskk5$x12par1ed_i, recodes = "1:3=0; 4:9=1; else =NA") 
 ```
 
-
-**NOTE** I need to remove any children who are missing any of the necessary variables, and who are already in poverty in wave 1, because they are not at risk of experiencing **this particular** transition. 
+**NOTE** I need to remove any children who are missing any of the necessary variables, and who are already in poverty in wave 1, because they are not at risk of experiencing **this particular** transition.
 
 Again, this is called forming the *risk set*
 
@@ -445,7 +443,7 @@ eclskk5<-eclskk5 %>% filter(is.na(pov_1)==F &
 
 ```
 
-Now we do the entire data set. To analyze data longitudinally, we need to reshape the data from the current "wide" format (repeated measures in columns) to a "long" format (repeated observations in rows). 
+Now we do the entire data set. To analyze data longitudinally, we need to reshape the data from the current "wide" format (repeated measures in columns) to a "long" format (repeated observations in rows).
 
 The `pivot_long()` function allows us to do this easily. It allows us to specify our repeated measures, time varying covariates as well as time-constant covariates.
 
@@ -462,7 +460,6 @@ e.long1 <- eclskk5 %>%
 ```
 
 Now, I need to form the transition variable, this is my event variable, and in this case it will be 1 if a child enters poverty between the first wave of the data and the third grade wave, and 0 otherwise.
-
 
 ```{r}
 e.long1 <- e.long1%>%
@@ -486,7 +483,7 @@ So, this shows us the repeated measures nature of the longitudinal data set.
 
 ```{r, fig.width=7, fig.height=6}
 #poverty transition
-fit<-survfit(Surv(time = as.numeric(wave), event = povtran) ~ 1,
+fit<-survfit(Surv(time = round(age, 0), event = povtran) ~ 1,
              data = e.long1)
 fit
 summary(fit)

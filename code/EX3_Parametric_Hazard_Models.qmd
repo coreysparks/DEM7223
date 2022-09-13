@@ -3,16 +3,15 @@ title: "DEM 7223 - Event History Analysis - Parametric Hazard Models"
 author:
 - name: '[Corey S. Sparks, PhD](https://coreysparks.github.io)'
   affiliation: '[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)'
-date: "September 21, 2020"
-output:
-  html_document:
-    df_print: paged
-    fig_height: 7
-    fig_width: 7
-    toc: yes
-    toc_float: yes
-  pdf_document:
-    toc: yes
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format: 
+    html:
+      self-contained: true
+      code-fold: true
+      code-tools: true
+      code-link: true
+      df-print: paged
+      toc: true
 ---
 
 ## Regression modeling of duration data
@@ -38,7 +37,9 @@ output:
 **Proportional Hazards Model (PH)**
 
 $$h(t_i) = h_0 \text{ } g(x_i)$$
-usually letting $g(x_i) = \text{exp } (x_i ' \beta)$
+usually letting 
+
+$$g(x_i) = \text{exp } (x_i ' \beta)$$
 
 **Accelerated Failure Time Model (AFT)**
 
@@ -70,10 +71,12 @@ They define characteristics of mathematical functions, and variations in said fu
 Some examples of parametric models:
 
 Linear regression, using the Normal distribution  
+
 $$y \sim Normal (b_0+b_1*x, \sigma^2_e)$$
 has 2 parameters, the mean, here shown as the linear mean function, and the variance in the residuals
 
 Logistic regression has mean function that is a transform of the mean
+
 $$y \sim Binomial (p)$$
 $$p = \left ( \frac{1}{1+exp^{(b_0+b_1*x)} } \right)$$
 
@@ -117,6 +120,7 @@ $$h(t) = \frac{\lambda \frac{1}{\gamma} t [ \frac{1}{\gamma} -1 ] }
 {\gamma  [ 1+(\lambda t)^{\frac{1}{\gamma}} ]}$$
 
 **Yikes!**
+
 If $\gamma$ < then the hazard rises, then falls, if $\gamma \geqslant 1$, the hazard is declining
 The parameter $\lambda$ is the location, and can be parameterized as the linear mean function:
 $\lambda = e^{-{X'\beta}}$
@@ -124,7 +128,8 @@ $\lambda = e^{-{X'\beta}}$
 * Gompertz - very famous demographic model for adult mortality, hazard function is:
 
 $$h(t) = \lambda e^{\gamma t} $$
-Where $\lambda = e^{X'\beta}$
+Where 
+$$\lambda = e^{X'\beta}$$
 
 If $\gamma$ < 1, then the hazard is monotone decreasing over time, if $\gamma$  >1, then the hazard is increasing over time, and if $\gamma$ = 1 then the hazard is flat, and we have the exponential.
 
@@ -152,6 +157,7 @@ $$\lambda_i=exp^{(- x' \beta)}$$
 So the hazard rate, is given by the covariates x
 
 ### More on proportional hazards
+
 An important aspect of the exponential model is called the *proportional hazards interpretation*
 If x is either 1 or 0, and the first term in the $\beta$'s is a constant (the intercept term), we can write our hazard model as:
 
@@ -178,13 +184,14 @@ Y=hazard(time), so if $exp(\beta_1) > 1$, you have an increase in hazard (and a 
 This example will illustrate how to fit parametric hazard models to continuous duration data (i.e. person-level data). In this example, I use the *time between the first and second birth* for women in the data as the _outcome variable_. 
 
 
-The data for this example come from the DHS Model data file [Demographic and Health Survey for 2012](https://t.co/tM8LfJhomf) individual recode file. This file contains information for all women sampled in the survey between the ages of 15 and 49. 
+The data for this example come from the DHS Model data file [Demographic and Health Survey for South Africa](https://t.co/tM8LfJhomf) individual recode file. This file contains information for all women sampled in the survey between the ages of 15 and 49. 
 
 This is an important data file, because for each woman, it gives information on all of her births, arrayed in columns. 
 
 
 ```{r}
 #Load required libraries
+library(tidyverse)
 library(haven)
 library(survival)
 library(car)
@@ -193,8 +200,8 @@ library(muhaz)
 library(eha)
 
 #load the data
-model.dat<-read_dta("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
-model.dat<-zap_labels(model.dat)
+dat<-read_dta("../data/ZAIR71FL.DTA")
+dat<-zap_labels(dat)
 
 ```
 
@@ -211,43 +218,56 @@ The DHS provides the dates of when each child was born in Century Month Codes.
 
 To get the interval for women who *actually had* a second birth, that is the difference between the CMC for the first birth `b3_01` and the second birth `b3_02`, but for women who had not had a second birth by the time of the interview, the censored time between births is the difference between `b3_01` and `v008`, the date of the interview.
 
-We have `r as.numeric(table(is.na(model.dat$bidx_01))[1])` women who are at risk of a second birth.
+We have `r as.numeric(table(is.na(dat$bidx_01))[1])` women who are at risk of a second birth.
 
 ```{r}
-table(is.na(model.dat$bidx_01))
+table(is.na(dat$bidx_01))
 #now we extract those women
-sub<-subset(model.dat, model.dat$bidx_01==1&model.dat$b0_01==0)
 
 #Here I keep only a few of the variables for the dates, and some characteristics of the women, and details of the survey
-sub2<-data.frame(CASEID=sub$caseid, 
-                 int.cmc=sub$v008,
-                 fbir.cmc=sub$b3_01,
-                 sbir.cmc=sub$b3_02,
-                 marr.cmc=sub$v509,
-                 rural=sub$v025,
-                 educ=sub$v106,
-                 age=sub$v012,
-                 partneredu=sub$v701,
-                 partnerage=sub$v730,
-                 weight=sub$v005/1000000,
-                 psu=sub$v021, strata=sub$v022)
 
-sub2$agefb = (sub2$age - (sub2$int.cmc - sub2$fbir.cmc)/12)
+sub<-dat %>%
+  filter(bidx_01==1&b0_01==0)%>%
+  transmute(CASEID=caseid, 
+                 int.cmc=v008,
+                 fbir.cmc=b3_01,
+                 sbir.cmc=b3_02,
+                 marr.cmc=v509,
+                 rural=v025,
+                 educ=v106,
+                 age=v012,
+                 partneredu=v701,
+                 partnerage=v730,
+                 weight=v005/1000000,
+                 psu=v021,
+                 strata=v022)%>%
+  select(CASEID, int.cmc, fbir.cmc, sbir.cmc, marr.cmc, rural, educ, age, partneredu, partnerage, weight, psu, strata)%>%
+  mutate(agefb = (age - (int.cmc - fbir.cmc)/12))
+
+
 ```
 
 Now I need to calculate the birth intervals, both observed and censored, and the event indicator (i.e. did the women *have* the second birth?)
 
 ```{r}
-sub2$secbi<-ifelse(is.na(sub2$sbir.cmc)==T,
-                   ((sub2$int.cmc))-((sub2$fbir.cmc)), 
-                   (sub2$fbir.cmc-sub2$sbir.cmc))
+sub2<-sub%>%
+  mutate(secbi = ifelse(is.na(sbir.cmc)==T,
+                   int.cmc - fbir.cmc, 
+                   fbir.cmc - sbir.cmc),
+         b2event = ifelse(is.na(sbir.cmc)==T,0,1))
+```
 
-sub2$b2event<-ifelse(is.na(sub2$sbir.cmc)==T,0,1) 
+### Kaplan- Meier survival for second birth interval
+
+```{r}
+library(ggsurvfit)
 fit<-survfit(Surv(secbi, b2event)~1, sub2)
-fit
 
-plot(fit, conf.int=T, ylab="S(t)", xlab="Months")
-title(main="Survival Function for Second Birth Interval, DHS Model Data")
+fit %>%
+  ggsurvfit()+
+  labs(title = "Survival Function for Second Birth Interval,\nSouth African DHS 2016",
+       y = "S(t)", 
+       x= "Months")
 
 ```
 
@@ -289,10 +309,11 @@ sub2$partnerhiedu<-ifelse(sub2$partneredu<3,0,
                           ifelse(sub2$partneredu%in%c(8,9),NA,1 ))
 
 options(survey.lonely.psu = "adjust")
+
 des<-svydesign(ids=~psu, strata=~strata,
                data=sub2[sub2$secbi>0,], weight=~weight )
 
-rep.des<-as.svrepdesign(des, type="bootstrap" )
+#rep.des<-as.svrepdesign(des, type="bootstrap" )
 
 ```
 
@@ -315,8 +336,14 @@ $\text{log} \lambda = x`\beta$
 ```{r}
 #exponential distribution for hazard, here we hard code it to be
 #a weibull dist with shape ==1 
-fit.1<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
-             data=sub2[sub2$secbi>0,], dist="weibull", shape = 1)
+
+sub2 <- sub2 %>%
+  filter( is.na(partnerhiedu) == F)
+
+fit.1<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+age+age2,
+             data=sub2,
+             dist="weibull",
+             shape = 1)
 summary(fit.1)
 plot(fit.1)
 
@@ -342,7 +369,8 @@ Where _W_ is an error (residual) term, which is assumed to follow some distribut
 ```{r}
 
 fit.1.aft<-survreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2 + age2,
-                   data=sub2[sub2$secbi>0,],dist = "exponential")
+                   data=sub2,
+                   dist = "exponential")
 
 summary(fit.1.aft)
 ```
@@ -361,8 +389,9 @@ The survival function is $S(t) = exp ( -(\lambda t)^p)$
 
 ```{r}
 #weibull distribution for hazard
-fit.2<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
-             data=sub2[sub2$secbi>0,], dist="weibull")
+fit.2<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+age+age2,
+             data=sub2,
+             dist="weibull")
 summary(fit.2)
 plot(fit.2)
 
@@ -399,13 +428,15 @@ The survival function is $S(t) = 1 - \Phi \left ( \frac{log t - \mu}{\sigma} \ri
 
 ```{r}
 #log-normal distribution for hazard
-fit.3<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
-             data=sub2[sub2$secbi>0,], dist="lognormal", center=T)
+fit.3<-phreg(Surv(secbi+.0001, b2event)~educ.high+partnerhiedu+age+age2,
+             data=sub2,
+             dist="lognormal")
+
 summary(fit.3)
-plot(fit.3)
+plot(fit.3, ylim=c(0, 1))
 
 #plot the hazard from the log normal vs the empirical hazard
-plot(fit.3, fn="haz")
+plot(fit.3)
 lines(fit.haz.sm, col=2)
 ```
 
@@ -417,8 +448,9 @@ So, the log-normal model fits the empirical hazard pretty well up to ~150 months
 
 ```{r}
 #log-normal distribution for hazard
-fit.4<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
-             data=sub2[sub2$secbi>0,], dist="loglogistic", center=T)
+fit.4<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+age+age2,
+             data=sub2,
+             dist="loglogistic")
 summary(fit.4)
 plot(fit.4)
 
@@ -449,13 +481,13 @@ For instance, given the observed hazard function above, we may break the data in
 
 ```{r}
 # here I must supply the times for the "pieces" where I expect the  hazard to be constant
-fit.5<-phreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
-             data=sub2[sub2$secbi>0,], dist="pch",
+fit.5<-pchreg(Surv(secbi, b2event)~educ.high+partnerhiedu+age+age2,
+             data=sub2,
              cuts=seq(1, 300, 12))
 summary(fit.5)
 plot(fit.5)
 
-plot(fit.5, fn="haz", ylim=c(0, .05))
+plot(fit.5, fn="haz")
 lines(fit.haz.sm, col=2)
 ```
 
@@ -472,8 +504,8 @@ AIC4
 The `eha` package also provides a graphical method for the Cumulative hazard function, which allows us to visualize these models even better. It uses the empirical hazard, as fit in the Cox model (more on this next week), and compares the parametric models to the empirical pattern:
 
 ```{r}
-emp<-coxreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,
-            data=sub2[sub2$secbi>0,])
+emp<-coxreg(Surv(secbi, b2event)~educ.high+partnerhiedu+age+age2,
+            data=sub2)
 
 check.dist(sp=emp,pp=fit.1, main = "Empirical vs. Exponential")
 check.dist(sp=emp,pp=fit.2, main = "Empirical vs. Weibull")
@@ -483,7 +515,7 @@ check.dist(sp=emp,pp=fit.5, main = "Empirical vs. PCH")
  
 ```
 
-We see that the PCH model and the log-logistic models both appear to fit the empirical hazard function better than the other parametric models.
+We see that the PCH model model appears to fit the empirical hazard function better than the other parametric models.
 
 ## Using Survey design
 There are no survey analysis functions to fit parametric hazard models, so we must roll our own using advice from Thomas Lumely in his book [Appendix E](http://uq5sd9vt7m.search.serialssolutions.com/?ctx_ver=Z39.88-2004&ctx_enc=info%3Aofi%2Fenc%3AUTF-8&rfr_id=info%3Asid%2Fsummon.serialssolutions.com&rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook&rft.genre=book&rft.title=Wiley+Series+in+Survey+Methodology&rft.au=Lumley%2C+Thomas&rft.date=2010-03-11&rft.pub=Wiley&rft.isbn=9780470284308&rft.externalDocID=10375602&paramdict=en-US) 
@@ -491,7 +523,10 @@ There are no survey analysis functions to fit parametric hazard models, so we mu
 
 ```{r}
 survey.fit <- withReplicates(rep.des, 
-                             quote(coef(survreg(Surv(secbi, b2event)~educ.high+partnerhiedu+I(age/5)+age2,dist="lognormal", weights = .weights+.0001))))
+                             quote(coef(survreg(Surv(secbi, b2event)~educ.high+partnerhiedu+age+age2,
+                                        dist="loglogistic",
+                                        weights = .weights+.0001))))
+
 survey.est<-as.data.frame(survey.fit)
 survey.test<-data.frame(beta = rownames(survey.est), estimate=survey.est$theta, se.est= survey.est$SE)
 survey.test$t<-survey.test$estimate/survey.test$se.est
