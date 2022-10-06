@@ -35,11 +35,11 @@ format:
 
     - e.g. if we are talking about marital duration, and one couple experiences a divorce 2 years after marriage, if we measure “periods” as years, then this couple would contribute 2 “observations” to the data, because they were at risk the first year and experienced the event their second year.
 
- * So each duration for each person, measured as time=Ti will have tij episodes in the new period-based data
+ * So each duration for each person, measured as time=Ti will have $t_{ij}$ episodes in the new period-based data
 
  * Each individual will exist in the data until they experience the event, or they are censored, and will contribute no more to the data after this point.
 
- * This means that at each tij there is a certain number of persons at risk of experiencing the event and a certain number that do; which is the definition of a hazard rate
+ * This means that at each $t_{ij}$ there is a certain number of persons at risk of experiencing the event and a certain number that do; which is the definition of a hazard rate
 
  * The biggest issue is getting the data into the appropriate format
 
@@ -163,7 +163,7 @@ $$\text{if x=0}: logit(h(t))=[\alpha_1 D_1 + \alpha_2 D_2 +...+\alpha_t D_T]$$
 
 This example will illustrate how to fit the discrete time hazard model to longitudinal and continuous duration data (i.e. person-level data). 
 
-The first example will use as its outcome variable, the event of a child dying before age 5. The data for this example come from the model.data [Demographic and Health Survey for 2012](http://www.dhsprogram.com/data/model-datasets.cfm) children's recode file. This file contains information for all births in the last 5 years prior to the survey.
+The first example will use as its outcome variable, the event of a child dying before age 5. The data for this example come from the data [Demographic and Health Survey for 2016 ](http://www.dhsprogram.com/data/model-datasets.cfm) children's recode file. This file contains information for all births in the last 5 years prior to the survey.
 
 The longitudinal data example uses data from the [ECLS-K ](http://nces.ed.gov/ecls/kinderdatainformation.asp). Specifically, we will examine the transition into poverty between kindergarten and 8th grade. 
 
@@ -246,8 +246,8 @@ e.long1 <- eclskk5 %>%
                names_to  = c(".value", "wave"), #make wave variable and put t-v vars into columns
                names_sep = "_") %>% #all t-v variables have _ between name and time, like age_1, age_2
   group_by(childid)%>%
-  mutate(age_enter = age, 
-         age_exit = lead(age, 1, order_by=childid))%>%
+  mutate(age_enter = round(age), 
+         age_exit = round(lead(age, 1, order_by=childid)))%>%
   mutate(nexpov = dplyr::lead(pov,n=1, order_by = childid))%>%
   mutate(povtran = ifelse(nexpov == 1 & pov == 0, 1, 0))%>%
   filter(is.na(age_exit)==F)%>%
@@ -318,14 +318,14 @@ while the choice of link function generally has no effect on predictions, the in
 
 ```{r}
 #Fit the model
-fitl1<-glm(povtran~as.factor(age_enter)-1,
+fitl1<-glm(povtran~as.factor(age_enter)+mlths - 1,
               e.long1, family=binomial)
 summary(fitl1)
 
 ```
 
 ```{r}
-1/(1+exp(-coef(fitl1)))
+round(100*(1/(1+exp(-coef(fitl1)))),2)
 ```
 
 ```{r}
@@ -335,19 +335,12 @@ library(questionr)
 e.long1%>%
   mutate(ager = round((age_enter+age_enter)/2) )%>%
   group_by(ager, mlths)%>%
-  summarise(prop_event= wtd.mean(povtran, na.rm=T))%>%
+  summarise(prop_event= wtd.mean(povtran, na.rm=T, weights = w6c6p_20))%>%
   ggplot()+
   aes(x=ager, y= prop_event, color=factor(mlths) )+
   geom_line()
 
 
-
-aggregate(povtran~factor(time_start),data=e.long1, FUN=mean)
-
-#make a Hazard ratio
-sums<-data.frame(round(summary(fitl1)$coef, 3))
-sums$HR<-round(exp(sums[,1]), 3)
-sums
 ```
 
 
@@ -356,29 +349,13 @@ We can use the model to generate predicted probabilities for different types of 
 ```{r}
 
 
-dat3<-expand.grid(time_start=as.factor(c(0,1)),mlths=c(0,1),
-                  race_rec=levels(des2$variables$race_rec))
+dat3<-expand.grid(age_enter =c(5,6,7,8),
+                  mlths=c(0,1))
 #unfortunately, expand.grid makes some unrealistic cases sometimes, get rid of those.
 
 dat3$fitted<-as.numeric(predict(fitl1, dat3, type="response"))
-head(dat3)
+knitr::kable(dat3)
 ```
-
-Do some plots, these aren't very cool, since there is only 2 time periods.
-
-```{r, fig.height=8, fig.width=8}
-library(ggplot2)
-dat3%>%
-  mutate(momedu = ifelse(mlths==1, "Mom < HS", "Mom >= HS"),
-         group = paste(momedu, race_rec, sep="-"), 
-         period=ifelse(time_start==1, "Period 1", "Period 2"))%>%
-  ggplot()+
-  geom_bar(aes(y=fitted,x=race_rec,fill=race_rec, group=race_rec),stat="identity", position="dodge")+
-  facet_grid(~momedu+period)+
-  ggtitle(label="Hazard of Transitioning into Poverty by Race and Parental Education and Wave")
-
-```
-
 
 
 # Continuous duration outcome - DHS data
@@ -387,8 +364,9 @@ dat3%>%
 
 ```{r}
 library(haven)
-model.dat<-read_dta("https://github.com/coreysparks/data/blob/master/ZZIR62FL.DTA?raw=true")
-model.dat<-zap_labels(model.dat)
+#load the data
+dat<-read_dta("../data/ZAIR71FL.DTA")
+dat<-zap_labels(dat)
 
 ```
 
@@ -406,42 +384,37 @@ The DHS provides the dates of when each child was born in Century Month Codes.
 
 To get the interval for women who *actually had* a second birth, that is the difference between the CMC for the first birth `b3_01` and the second birth `b3_02`, but for women who had not had a second birth by the time of the interview, the censored time between births is the difference between `b3_01` and `v008`, the date of the interview.
 
-We have `r as.numeric(table(is.na(model.dat$bidx_01))[1])` women who are at risk of a second birth.
+We have `r as.numeric(table(is.na(dat$bidx_01))[1])` women who are at risk of a second birth.
 
 ```{r extract_data}
-#We form a subset of variables
-sub<-subset(model.dat, model.dat$bidx_01==1&model.dat$b0_01==0)
-
-#Here I keep only a few of the variables for the dates, and some characteristics of the women, and details of the survey
-sub2<-data.frame(CASEID=sub$caseid, 
-                 int.cmc=sub$v008,
-                 fbir.cmc=sub$b3_01,
-                 sbir.cmc=sub$b3_02,
-                 marr.cmc=sub$v509,
-                 rural=sub$v025,
-                 educ=sub$v106,
-                 age=sub$v012,
-                 partneredu=sub$v701,
-                 partnerage=sub$v730,
-                 weight=sub$v005/1000000,
-                 psu=sub$v021, strata=sub$v022)
-
-sub2$agefb = (sub2$age - (sub2$int.cmc - sub2$fbir.cmc)/12)
-
-#censoring indicator for death by age 5, in months (<=60 months)
-sub2$secbi<-ifelse(is.na(sub2$sbir.cmc)==T,
-                   ((sub2$int.cmc))-((sub2$fbir.cmc)),
-                   (sub2$fbir.cmc-sub2$sbir.cmc))
-sub2$b2event<-ifelse(is.na(sub2$sbir.cmc)==T,0,1) 
-table(sub2$b2event)
-
-sub2$educ.high<-ifelse(sub2$educ %in% c(2,3), 1, 0)
-sub2$age2<-(sub2$agefb)^2
-sub2$partnerhiedu<-ifelse(sub2$partneredu<3,0,
-                          ifelse(sub2$partneredu%in%c(8,9),NA,1 ))
+sub<-dat %>%
+  filter(bidx_01==1&b0_01==0)%>%
+  transmute(CASEID=caseid, 
+                 int.cmc=v008,
+                 fbir.cmc=b3_01,
+                 sbir.cmc=b3_02,
+                 marr.cmc=v509,
+                 rural=v025,
+                 educ=v106,
+                 age = v012,
+                 agec=cut(v012, breaks = seq(15,50,5), include.lowest=T),
+                 partneredu=v701,
+                 partnerage=v730,
+                 weight=v005/1000000,
+                 psu=v021,
+                 strata=v022)%>%
+  select(CASEID, int.cmc, fbir.cmc, sbir.cmc, marr.cmc, rural, educ, age, agec, partneredu, partnerage, weight, psu, strata)%>%
+  mutate(agefb = (age - (int.cmc - fbir.cmc)/12))%>%
+  mutate(secbi = ifelse(is.na(sbir.cmc)==T,
+                   int.cmc - fbir.cmc, 
+                   fbir.cmc - sbir.cmc),
+         b2event = ifelse(is.na(sbir.cmc)==T,0,1))
 
 options(survey.lonely.psu = "adjust")
-des<-svydesign(ids=~psu, strata=~strata, data=sub2[sub2$secbi>0,], weight=~weight )
+des<-svydesign(ids=~psu,
+               strata=~strata,
+               data=sub[sub$secbi>0,],
+               weight=~weight )
 
 
 ```
@@ -454,12 +427,14 @@ R provides a useful function called `survSplit()` in the `survival` library that
 
 ```{r}
 #make person period file
-pp<-survSplit(Surv(secbi, b2event)~. , data = sub2[sub2$secbi>0,],
-              cut=seq(0,360, 12),  episode="year_birth")
+pp<-survSplit(Surv(secbi, b2event)~. , 
+              data = sub[sub$secbi>0,],
+              cut=seq(0,60, 12), 
+              episode="year_birth")
 
 pp$year <- pp$year_birth-1
 pp<-pp[order(pp$CASEID, pp$year_birth),]
-head(pp[, c("CASEID", "secbi", "b2event", "year", "educ.high", "agefb")], n=20)
+knitr::kable(head(pp[, c("CASEID", "secbi", "b2event", "year", "educ", "agefb")], n=20))
 
 ```
 
@@ -476,10 +451,10 @@ pp%>%
 
 
 pp%>%
-  group_by(year, educ.high)%>%
+  group_by(year, educ)%>%
   summarise(prop_bir=mean(b2event, na.rm=T))%>%
   ggplot(aes(x=year, y=prop_bir))+
-  geom_line(aes(group=factor(educ.high), color=factor(educ.high) ))+
+  geom_line(aes(group=factor(educ), color=factor(educ) ))+
   ggtitle(label = "Hazard of having a second birth by year after first birth and Maternal education")
 
 ```
@@ -491,39 +466,50 @@ So, the best thing about the discrete time model, is that it's just logistic reg
 ```{r models1}
 #generate survey design
 
-des<-svydesign(ids=~psu, strata = ~strata , weights=~weight, data=pp)
+des<-svydesign(ids=~psu,
+               strata = ~strata ,
+               weights=~weight,
+               data=pp)
 
-#Fit the basic logistic model with ONLY time in the model
-#I do -1 so that no intercept is fit in the model, and we get a hazard estimate for each time period
+```
+
+
+
+#### Fit the basic logistic model with ONLY time in the model
+I do -1 so that no intercept is fit in the model, and we get a hazard estimate for each time period
+
+```{r}
 fit.0<-svyglm(b2event~as.factor(year)-1,design=des , family="binomial")
 summary(fit.0)
 
 #Plot the hazard function on the probability scale
 haz<-1/(1+exp(-coef(fit.0)))
-time<-seq(1,7,1)
+time<-seq(1,6,1)
 plot(haz~time, type="l", ylab="h(t)")
-title(main="Discrete Time Hazard Function for Child Mortality")
+title(main="Discrete Time Hazard Function for birth interval")
 
 ```
 
 Now we include a single predictor and examine the proportional hazards
 
 ```{r}
-fit.1<-svyglm(b2event~as.factor(year)+educ.high-1,design=des , family=binomial(link="cloglog"))
+fit.1<-svyglm(b2event~as.factor(year)+factor(educ)-1,
+              design=des ,
+              family=binomial(link="cloglog"))
 summary(fit.1)
 ```
 
-Which shows a lower risk of having a child for highly educated mothers. In fact, it's a `r round(100*(exp(-0.67489)-1), 2)`% lower risk
+Which shows a lower risk of having a child for highly educated mothers. In fact, it's a `r round(100*(exp(-0.4352)-1), 2)`% lower risk
 
-Next, I do the plots of the hazard functions the Singer and Willett way. I got this code from Singer and Willett's [example from Ch 11](http://www.ats.ucla.edu/stat/r/examples/alda/ch11.htm)
+Next, I do the plots of the hazard functions the Singer and Willett way. I got this code from Singer and Willett's [example from Ch 11](https://stats.oarc.ucla.edu/r/examples/alda/r-applied-longitudinal-data-analysis-ch-11/)
 
 ```{r}
 
-dat4<-expand.grid(year=1:7, educ.high=c(0,1))
+dat4<-expand.grid(year=1:6, educ=c(0,1,2,3))
 dat4$pred<-as.numeric(predict(fit.1, newdata=dat4, type="response"))
 
 dat4%>%
-  ggplot(aes(x=year, y=pred,color=factor(educ.high), group=factor(educ.high) ))+
+  ggplot(aes(x=year, y=pred,color=factor(educ), group=factor(educ) ))+
   geom_line()+
   ggtitle(label="Hazard of Second birth by maternal Education and Time since first birth")
 
