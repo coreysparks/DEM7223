@@ -1,7 +1,7 @@
 # Demography 7233
 ## Event History Analysis
 
-![](DEM7223.png){width=20%}
+<img src="DEM7223.png" width="150" height="150" />
 
 ### Fall 2022
 
