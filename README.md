@@ -1,6 +1,8 @@
 # Demography 7233
 ## Event History Analysis
 
+<img src="DEM7223.png" width="150" height="150" />
+
 ### Fall 2022
 
 Thursday 6-8:30  
