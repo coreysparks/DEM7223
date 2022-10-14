@@ -355,12 +355,13 @@ So the general model, quartic and spline give the same AIC points, but the squar
 library(survey)
 library(survival)
 library(car)
+library(tidyverse)
 dat<-haven::read_dta("/home/corey/ExpanDrive/OneDrive Business/classes/dem7223/dem7223_22//data/nhis_00012.dta")
 names(dat)
 sub<-subset(dat, dat$mortelig==1&is.na(dat$racenew)==F)
 samps<-sample(1:length(sub$year), size = 100000, replace = F)
 sub<-sub[samps,]
-sub<-zap_labels(sub)
+sub<-haven::zap_labels(sub)
 
 ```
 
@@ -433,6 +434,10 @@ sub$race_eth[is.na(sub$hisp) ==T | is.na(sub$race)==T]<-NA
 library(forcats)
 
 sub$race_eth<-fct_relevel(sub$race_eth, c("NHWhite", "NHBlack" , "Hispanic", "NHother"))
+
+sub <- sub%>%
+  select(race_eth, d.age, d.event, college, psu, strata, mortwtsa)%>%
+  filter(complete.cases(.))
 ```
 
 ### Create person - period file
@@ -446,6 +451,7 @@ cut=seq(18, 100, 5),  episode="mort_5_yr")
 Analysis of death outcome 
 
 ```{r}
+options(survey.lonely.psu = "adjust")
 des2<-svydesign(ids=~psu, strata=~strata,
                 weights = ~mortwtsa, data=subpp, nest=T)
 
@@ -502,7 +508,7 @@ library(magrittr)
 # out<-melt(setDT(newdat),
 #           id = c("mort_5_yr", "race_eth", "college"),
 #           measure.vars = list(haz=c("h_0", "h_1","h_2","h_3", "h_4")))
-head(out, n=20)
+head(out2, n=20)
 
 ```
 
@@ -511,18 +517,18 @@ head(out, n=20)
 
 library(ggplot2)
 
-out%>%
+out2%>%
   dplyr::filter(college == "coll")%>%
-  dplyr::mutate(mod = dplyr::case_when(.$variable =="h_0" ~ "Constant",
-                          .$variable =="h_1" ~ "General",
-                          .$variable =="h_2" ~ "Linear",
-                          .$variable =="h_3" ~ "Polynomial - 2",
-                          .$variable =="h_4" ~ "Spline"))%>%
-  ggplot(aes(x = mort_5_yr*5, y=value ))+
+  dplyr::mutate(mod = dplyr::case_when(.$mod =="0" ~ "Constant",
+                          .$mod =="1" ~ "General",
+                          .$mod =="2" ~ "Linear",
+                          .$mod =="3" ~ "Polynomial - 2",
+                          .$mod =="4" ~ "Spline"))%>%
+  ggplot(aes(x = mort_5_yr*5, y=haz ))+
   geom_line(aes(group=race_eth, color=race_eth) )+
   labs(title = "Hazard function for adult mortality", 
        subtitle = "Alternative model specifications")+
-  xlab("Age")+ylab("S(t)")+xlim(60, 100)+
+  xlab("Age")+ylab("S(t)")+xlim(50, 80)+
   facet_wrap(~mod, scales = "free_y")#+ scale_y_continuous(trans = "log10")
 ```
 
