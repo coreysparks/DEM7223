@@ -264,7 +264,7 @@ Since we have a simple binary outcome, we can take the mean of it and arrive at 
 ```{r}
 
 e.long1%>%
-  mutate(ager = round((age_enter+age_enter)/2) )%>%
+  mutate(ager = round((age_enter+age_exit)/2) )%>%
   group_by(ager)%>%
   summarise(prop_event= mean(povtran, na.rm=T))%>%
   ggplot()+
@@ -278,7 +278,7 @@ We can likewise do simple descriptive analysis of the outcome by characteristics
 
 ```{r}
 e.long1%>%
-  mutate(ager = round((age_enter+age_enter)/2) )%>%
+  mutate(ager = round((age_enter+age_exit)/2) )%>%
   group_by(ager, mlths)%>%
   summarise(prop_event= mean(povtran, na.rm=T))%>%
   ggplot()+
@@ -333,7 +333,7 @@ library(questionr)
 
 
 e.long1%>%
-  mutate(ager = round((age_enter+age_enter)/2) )%>%
+  mutate(ager = round((age_enter+age_exit)/2) )%>%
   group_by(ager, mlths)%>%
   summarise(prop_event= wtd.mean(povtran, na.rm=T, weights = w6c6p_20))%>%
   ggplot()+
