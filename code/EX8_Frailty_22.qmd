@@ -1,0 +1,462 @@
+---
+title: "DEM 7223 - Event History Analysis -  Models of Frailty"
+author:
+- name: '[Corey S. Sparks, PhD](https://coreysparks.github.io)'
+  affiliation: '[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format: 
+    html:
+      self-contained: true
+      code-fold: true
+      code-tools: true
+      code-link: true
+      df-print: paged
+      toc: true
+---
+
+# Notes
+## Unobserved Heterogeneity
+
+ * Often in hazards analysis we are faced with the possibility that we may not be able to measure directly all of the factors that could influence an individual's (or a group's) hazard/duration time
+
+ * This is the idea of unobserved heterogeneity (or variance) 
+
+ * If there are factors inherent to the individual that makes him/her more/less likely to experience the event, then we must be prepared to examine this possibility in our analysis
+
+### Levels of heterogeneity
+
+![Sastry 1997](C:/Users/ozd504//Github/DEM7223/images/sastry.png)
+
+### Heterogeneity == Frailty
+
+ * In hazards models we typically deal with unobserved heterogeneity through the concept of frailty
+
+ * Frailty is the idea that some individuals (or groups) have an inherently higher hazard rate (although we cannot directly measure why) leading to that individual/or group to have shorter duration time (higher risk==high frailty: lower risk==low frailty)
+
+### Frailty in populations
+ * Consider a population composed of 2 (or more) sub-populations, with the same size and with constant mortality rates, $\mu_1$ and $\mu_2$  
+ 
+ * If  $\mu_1$ and $\mu_2$ are not equal, then the one with the higher rate can be consider to have higher *frailty* compared to the other.  
+ 
+ * After x time periods, there will be:
+ 
+ $e^{-\mu_1 x}$ and  $e^{-\mu_2 x}$ remaining individuals in the two sub-populations
+ 
+ * Since the two groups started with the same population size, the initial mortality rate in the total population will be the mean of the two rates:
+ 
+ $$\mu = \frac{\mu_1+\mu_2}{2}$$
+ and the overall mortality rate at each time x will be:
+ 
+ $$\mu_{total} = \frac{e^{-\mu_1 x} \mu_1 +e^{-\mu_2 x} \mu_2 }{e^{-\mu_1 x} +e^{-\mu_2 x}}$$
+ * Which is less than the initial rate, because the population with the higher rate of mortality will be smaller at time x, because of it's higher rate of mortality. 
+ 
+ * The population will show a decreasing mortality rate over time, because of the increased death rate of the group with the higher frailty. 
+ 
+ * This is called *differential frailty*
+ 
+```{r}
+x<-1:100
+n1<-n2<-100
+mu1<-.02; mu2<-.05
+
+mrate<-mean(c(mu1, mu2))
+
+trate<-((exp(-mu1*x)*mu1)+(exp(-mu2*x)*mu2))/(exp(-mu1*x)+exp(-mu2*x))
+
+plot(y=rep(mu1, 100), x=x, type="l" ,ylim=c(.01, .07))
+lines(y=rep(mu2, 100), x=x,  col="red")
+lines(y=rep(mrate, 100), x=x, col="blue")
+lines(trate, x=x, lty=3, col="green", lwd=2)
+legend("topright", 
+      legend= c("Low risk pop", "High risk pop", "Average", "Population"), 
+      col=c("black", "red", "blue", "green"),
+      lty=c(1,1,1,2),
+      cex=.7)
+```
+ * This example shows the population-level effect of not controlling for the possibility of individual or group difference in frailty
+ 
+ * If we leave off this possibility, our observed rates may not be correct
+
+## Levels of frailty
+There are generally two ways of incorporating frailty in models. These correspond to two assumed levels at which frailty can operate: Individual and Shared.
+
+### Individual frailty
+ * If we assume individual-based frailty, the we assume that that unmeasured heterogeneity affects an individual's risk of experiencing the event in question. This modifies the hazard function to be:
+ 
+ $$h_i(t) = h_0 exp(x'\beta + w_i)$$
+ 
+Where the $w_i \sim Normal(0, \sigma_w)$. 
+If $\sigma_w= 0$ then we have the standard proportional hazards model. 
+
+This implies that frailty contributes an independent, additive term to the linear mean function for the proportional hazards model.
+
+### Shared frailty
+Similarly to individual frailty, *shared frailty* likewise introduces an extra term in the hazard model. Instead of being specific to each individual, the term is specific to each sub-group in our analysis. These sub-groups can be communities, families or schools. The model is then:
+
+ $$h_i(t) = h_0 exp(x'\beta + u_j)$$
+ 
+Where the 
+
+$u_j \sim Normal(0, \sigma_u)$. 
+
+If $\sigma_u= 0$ then we have the standard proportional hazards model. 
+
+This model specifies an additive increase or decrease in the mean function for the PH model, where individuals within communities with positive frailty values face higher risk of experiencing the event in question, and vice versa. 
+
+
+## Shared frailty is a multi-level model
+ * When a shared frailty model is used, we are basically specifying a multi-level model
+
+ * This means, you can include individual and group-level predictors, and we can also incorporate structure to the groups to measure spatial or temporal correlations in risk.
+ 
+
+# Examples
+This example will illustrate how to fit the extended Cox Proportional hazards model with Gaussian frailty to continuous duration data (i.e. person-level data) and a discrete-time (longitudinal) data set. In this example, I will use the event of a child dying before age 5. The data for this example come from the data [Demographic and Health Survey for 2012](http://www.dhsprogram.com/data/model-datasets.cfm) birth history recode file. This file contains information for all births to women in the survey.
+
+The longitudinal data example uses data from the [ECLS-K ](http://nces.ed.gov/ecls/kinderdatainformation.asp). Specifically, we will examine the transition into poverty between kindergarten and third grade. 
+
+
+
+```{r}
+
+#load the data
+library(tidyverse)
+library(haven)
+library(survival)
+library(car)
+library(muhaz)
+library(coxme)
+library(lme4)
+library(ggsurvfit)
+
+dat<-read_dta("../data/ZAKR71FL.DTA")
+dat<-zap_labels(dat)
+```
+
+
+```{r extract_data}
+#We form a subset of variables
+dat$death.age<-ifelse(dat$b5==1,
+                          ((((dat$v008)))-(((dat$b3)))) 
+                          ,dat$b7)
+
+#censoring indicator for death by age 5, in months (12 months)
+dat$d.event<-ifelse(is.na(dat$b7)==T|dat$b7>60,0,1)
+dat$d.eventfac<-factor(dat$d.event)
+levels(dat$d.eventfac)<-c("Alive at 5", "Dead by 5")
+table(dat$d.eventfac)
+
+#recodes
+dat$male <- ifelse(dat$b4==1,1,0)
+dat$educ.high <- ifelse(dat$v106 %in% c(2,3), 1, 0)
+dat$age <- dat$v012
+dat$age2 <- dat$v012^2
+dat$rural <- dat$v025
+dat$bord <- dat$bidx
+dat$wealth <- as.factor(dat$v190)
+dat$weights <- dat$v005/1000000
+dat$psu <- dat$v021
+dat$strata <- dat$v022
+dat$region<- dat$v023
+```
+
+### Fit the ordinary Cox model
+Here I fit the ordinary Cox model without frailty, just for comparison sake. 
+
+```{r model}
+#using coxph in survival library
+fit.cox2<-coxph(Surv(death.age, d.event)~bord+male+educ.high+age+wealth,
+                data=dat,
+                weights=weights)
+summary(fit.cox2)
+
+plot(survfit(fit.cox2),  ylim=c(.8,1), xlim=c(0,60),
+     ylab="S(t)", xlab="Age in Months")
+title(main="Survival Function for Under 5 Child Mortality")
+```
+
+# Fit the Cox model with frailty at the neighborhood level
+
+The `coxme()` function in the `coxme` library [Link](http://cran.r-project.org/web/packages/coxme/index.html) will fit the Cox model with shared frailty, assuming a Gaussian frailty term. The model would look like:
+
+$$h_j (t) = h_{0j} e^{(x'\beta + u_j)}$$
+
+where
+
+$$u_j \sim N(0, \sigma^2)$$
+
+is a Normally distributed random effect, identical for each person in the jth group.
+
+This term raises or lowers the average hazard function the same way for each person within each group, but allows the overall risk for people in different groups to be different. 
+
+This would be considered to be a random intercept model, if we were considering an ordinary linear or generalized linear model. 
+
+
+In this case, i'm using the PSU as an indicator of the "neighborhoood" where the child lives.
+
+```{r}
+
+fit.cox.f<-coxme(Surv(death.age, d.event)~bord+male+educ.high+age+wealth+(1|psu),
+                 data=dat,
+                 weights=weights)
+summary(fit.cox.f)
+
+```
+
+This gives us the variance in child mortality by region, which is honestly pretty substantial. 
+
+We can use a likelihood ratio test to see if the frailty model is significantly better than the ordinary Cox model:
+
+```{r}
+anova(fit.cox.f, fit.cox2)
+AIC(fit.cox.f)
+AIC(fit.cox2)
+```
+
+Which it is, and this is supported by the AIC difference between the two models of `r round(AIC(fit.cox2)-AIC(fit.cox.f), 2)` points.
+
+So, what are the frailties in this case? We can get those from the `frail` portion of the model structure:
+
+```{r}
+head(fit.cox.f$frail$psu)
+
+which.max(fit.cox.f$frail$psu)
+
+hist(fit.cox.f$frail$psu)
+abline(v=0, col="red", lwd=3)
+```
+
+Which shows the psu `r names(which.max(unlist(fit.cox.f$frail$psu)))` has the highest frailty, which means that the average level of childhood mortality is highest in that region, while the lowest frailty is in `r names(which.min(unlist(fit.cox.f$frail$psu)))`.  
+
+
+### Random slopes
+If we were interested in whether a predictor variable had heterogeneous effects across the various groups within our data, we could include that in our model as well, and we would have effectively a random slope model:
+
+$$h_j (t) = h_{0j} e^{(x'\beta + u_j+\gamma_j 'x)}$$
+
+where $\gamma_j$ is a group-specific effect of a particular predictor variable, and these two random effects will be distributed as:
+
+$$ \left[\begin{array}
+{rrr}
+u_j \\
+\gamma_j
+\end{array}\right] \sim \text{MVN}(0, \Sigma)$$
+
+
+
+```{r}
+#See if higher birth order children face equal disadvantage in all regions
+fit.cox.f2<-coxme(Surv(death.age, d.event)~bord+male+educ.high+age+wealth+(1+bord|psu),
+                  data=dat,
+                  weights=weights)
+summary(fit.cox.f2)
+
+anova(fit.cox.f, fit.cox.f2)
+```
+
+And it looks like there is not a significant regional variation in this effect, because the model with the additional term does not fit the data significantly better than the model with only the random "intercept". 
+
+
+# Using Longitudinal Data
+As in the other examples, I illustrate fitting these models to data that are longitudinal, instead of person-duration. In this example, we will examine how to fit the Cox model to a longitudinally collected data set. 
+
+First we load our data
+
+```{r load_longdata}
+eclskk5<-readRDS("C:/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_22//data/eclskk5.rds")
+names(eclskk5)<-tolower(names(eclskk5))
+
+#get out only the variables I'm going to use for this example
+myvars<-c( "childid","x_chsex_r", "x_raceth_r", "x1kage_r","x4age",
+           "x5age", "x6age", "x7age", "x2povty","x4povty_i", "x6povty_i",
+           "x8povty_i","x12par1ed_i", "s2_id","w6c6p_6psu", "w6c6p_6str", "w6c6p_20")
+eclskk5<-eclskk5[,myvars]
+
+
+# time varying variables
+eclskk5$age_1<-ifelse(eclskk5$x1kage_r==-9, NA, eclskk5$x1kage_r/12)
+eclskk5$age_2<-ifelse(eclskk5$x4age==-9, NA, eclskk5$x4age/12)
+#for the later waves, the NCES group the ages into ranges of months,
+#so 1= <105 months, 2=105 to 108 months. 
+#So, I fix the age at the midpoint of the interval they give,
+#and make it into years by dividing by 12
+
+eclskk5$age_3<-ifelse(eclskk5$x5age==-9, NA, eclskk5$x5age/12)
+
+eclskk5$pov_1<-ifelse(eclskk5$x2povty==1,1,0)
+eclskk5$pov_2<-ifelse(eclskk5$x4povty_i==1,1,0)
+eclskk5$pov_3<-ifelse(eclskk5$x6povty_i==1,1,0)
+
+
+#Time constant variables
+#Recode race with white, non Hispanic as reference using dummy vars
+eclskk5$race_rec<-Recode (eclskk5$x_raceth_r, recodes="1 = 'nhwhite';2='nhblack';3:4='hispanic';5='nhasian'; 6:8='other';-9=NA",
+                          as.factor = T)
+eclskk5$male<-Recode(eclskk5$x_chsex_r, recodes="1=1; 2=0; -9=NA")
+eclskk5$mlths<-Recode(eclskk5$x12par1ed_i, recodes = "1:2=1; 3:9=0; else = NA")
+eclskk5$mgths<-Recode(eclskk5$x12par1ed_i, recodes = "1:3=0; 4:9=1; else =NA") 
+```
+
+
+Now, I need to form the transition variable, this is my event variable, and in this case it will be 1 if a child enters poverty between the first wave of the data and the third grade wave, and 0 otherwise.
+
+**NOTE** I need to remove any children who are already in poverty age wave 1, because they are not at risk of experiencing **this particular** transition. Again, this is called forming the *risk set*
+
+```{r}
+e.long1<-eclskk5 %>%
+  filter(is.na(pov_1)==F &
+                  is.na(pov_2)==F &
+                  is.na(pov_3)==F & 
+                  is.na(age_1)==F &
+                  is.na(age_2)==F &
+                  is.na(age_3)==F &
+                    pov_1!=1) %>%
+  select(childid,male, race_rec, mlths, mgths,w6c6p_20, w6c6p_6psu, w6c6p_6str,s2_id,   #time constant
+        age_1, age_2, age_3, #t-varying variables
+         pov_1, pov_2, pov_3)%>%
+   pivot_longer(cols = c(-childid, -male, -race_rec, -mlths, -mgths,-w6c6p_20, -w6c6p_6str, -w6c6p_6psu, -s2_id), #time constant variables go here
+               names_to  = c(".value", "wave"), #make wave variable and put t-v vars into columns
+               names_sep = "_") %>%#all t-v variables have _ between name and time, like age_1, age_2
+  group_by(childid)%>%
+  mutate(nexpov = dplyr::lead(pov,n=1, order_by = childid))%>%
+  mutate(povtran = ifelse(nexpov == 1 & pov == 0, 1, 0))%>%
+  mutate(age_enter = round(age), 
+         age_exit = round(lead(age, 1, order_by=childid)))%>%
+  ungroup()
+
+#find which kids failed in the first time period and remove them from the second risk period risk set
+failed1<-which(is.na(e.long1$povtran)==T)
+e.long1<-e.long1[-failed1,]
+
+e.long1$age1r<-round(e.long1$age_enter, 0)
+e.long1$age2r<-round(e.long1$age_exit, 0)
+
+head(e.long1)
+
+```
+
+## Weights and hierarchical models
+
+```{r wts}
+#make an id that is the combination of state and strata 
+e.long1$sampleid<-paste(e.long1$w6c6p_6str, e.long1$w6c6p_6psu)
+#within each sampling unit, sum the weights
+wts<-tapply(e.long1$w6c6p_20,e.long1$sampleid,sum)
+#make a data frame from this
+wts<-data.frame(id=names(unlist(wts)), wt=unlist(wts))
+#get the unique sampling location ids'
+t1<-as.data.frame(table(e.long1$sampleid))
+#put all of this into a data set
+wts2<-data.frame(ids=wts$id, sumwt=wts$wt, jn=t1$Freq)
+#merge all of this back to the original data file
+e.long1<-merge(e.long1, wts2, by.x="sampleid", by.y="ids", all.x=T)
+#In the new data set, multiply the original weight by the fraction of the
+#sampling unit total population each person represents
+e.long1$swts<-e.long1$w6c6p_20*(e.long1$jn/e.long1$sumwt)
+
+```
+
+### Fit basic Cox model
+
+Now we fit the Cox model using full survey design. In the ECLS-K, I use the longitudinal weight for waves 1-7, as well as the associated psu and strata id's for the longitudinal data from these waves from the parents of the child, since no data from the child themselves are used in the outcome.
+
+```{r fitcoxmodel}
+#Fit the model
+library(survival)
+fitl1<-coxph(Surv(time = age1r, time2=age2r, event = povtran)~mlths+mgths+race_rec,
+             data=e.long1,
+             weights = swts)
+summary(fitl1) 
+```
+
+
+## Cox model with additive frailty
+Now we fit the Cox model and doing frailty by the school the child attends. I use the weights calculated above, standardized to the within cluster sample size.
+
+```{r fitmodel}
+library(coxme)
+#Fit the model
+fitl2<-coxme(Surv(time = age1r, time2=age2r, event = povtran)~mlths+mgths+race_rec+(1|s2_id),
+             e.long1,
+             weights = swts)
+summary(fitl2) 
+```
+
+```{r modeltest}
+anova(fitl1, fitl2)
+AIC(fitl1)
+AIC(fitl2)
+
+hist(fitl2$frail$s2_id)
+abline(v=0, col="red", lwd=3)
+```
+
+So, we see that the frailty model has a large variance, and that the AIC is lower than the ordinary Cox model, suggesting better model fit. The model likelihood ratio test also confirms that the frailty model fits better.
+
+
+# Discrete time frailty model 
+
+## Basic Discrete time model
+First, we fit the basic discrete time model for our outcome. Here I'm going to use the new standardized weights I created above in a regular `glm()` model.
+
+Below I use a Bayesian estimate of this model using `rstanarm` and `stan_glm`
+
+```{r basicglm}
+
+e.long1 <- e.long1%>%
+  filter(is.na(swts)==F)
+
+
+fit1<-rstanarm::stan_glm(povtran~as.factor(age1r)+mlths+mgths+race_rec,
+          data=e.long1,
+          weights = swts,
+          cores=3, chains=3,
+          family="binomial" )
+
+broom.mixed::tidy(fit1,
+                  effects=c("fixed"), 
+                  conf.int=T)
+```
+
+
+### Discrete time model with shared frailty
+For the discrete time model, if the logit link is used, then we are effectively fitting a multilevel model for our outcome. The model with only a group frailty component will have the exact same form as the multilevel logit model with a random intercept at the group level:
+Fit the basic random intercept model using the complementary log-log link function: 
+
+$$log(-log(1-h(t))) = \beta_{0j} +x'\beta +Z\gamma'$$ 
+  
+with 
+  
+$\beta_{0j} = \beta_0 + Z\gamma'+ u_j$
+
+and
+
+$u_j\sim N(0, \sigma_u^2)$
+
+Where the intercepts ($u_j$) for each group vary randomly around the overall mean ($\beta_0$).  
+
+The individual level predictors are incorporated into $x$, while the group level predictors (if any are measured) are included in $Z$. If only a random intercept is specified, then $Z$ is a vector of 1's. 
+
+```{r dislogit}
+#this will take a lot longer to fit compared to the ordinary logit
+#I also had to include some extra optimization details because the default maximizer didn't return a satisfactory model fit criteria.
+library(rstanarm)
+
+
+
+fit2<-stan_glmer(povtran~factor(age1r)+mlths+mgths+race_rec+(1|s2_id),
+            data=e.long1,
+            weights =swts,
+            cores=3, chains=3,
+            family="binomial")
+
+print(fit2, digits=3)
+
+broom.mixed::tidy(fit2,
+                  effects=c("fixed", "ran_pars"), 
+                  conf.int=T)
+ 
+```
+
+
+

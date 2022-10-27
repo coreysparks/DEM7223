@@ -55,9 +55,9 @@ In Rstudio. Please have these programs downloaded and installed prior to class.
 | 8 | 10/13 | Discrete time models | M 8, SW 11-12  |
 | 9 | 10/20 |Discrete time models | M 8, SW 11-12 |
 | 10 | 10/27 | Frailty models | M 8 |
-| 11 | 11/3 | Discrete time frailty models | M 8 |
-| 12 | 11/10 |Multi state models  | M ch 10 |
+| 11 | 11/3 | Multi state models | M 10 |
+| 12 | 11/10 | Multi state models  | M ch 10 |
 | 13 | 11/17 | **Draft papers due** |  |
 | 14 | 11/24 | No class Thanksgiving | |
-| 15 | 12/1 | Multi state models  | M ch 10  |
+| 15 | 12/1 | TBD | - |
 | 16 | 12/9 | **PhD students paper due** |  |

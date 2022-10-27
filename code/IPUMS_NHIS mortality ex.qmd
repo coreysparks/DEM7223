@@ -71,7 +71,15 @@ nhis_dat <- nhis_dat %>%
   mutate(death_time = ifelse( MORTSTAT ==1, 
                              MORTDODY - YEAR , 
                              2014 - YEAR ), 
-         d5.event = ifelse(MORTSTAT == 1 & death_time <= 5, 1, 0))
+         d5.event = ifelse(MORTSTAT == 1 & death_time <= 5, 1, 0))%>%
+  filter(is.na(MORTWTSA)==F)
+
+library(survey)
+des<- svydesign(ids =~ PSU, strata=~STRATA, weights =~MORTWTSA, data=nhis_dat, nest=T)
+
+
+test<- svycoxph(Surv(death_age, d5.event) ~ POVERTY, des)
+
 
 library(survival)
 
