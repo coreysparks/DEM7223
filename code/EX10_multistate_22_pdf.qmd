@@ -4,14 +4,7 @@ author:
 - name: '[Corey S. Sparks, PhD](https://coreysparks.github.io)'
   affiliation: '[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)'
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-format: 
-    html:
-      self-contained: true
-      code-fold: true
-      code-tools: true
-      code-link: true
-      df-print: paged
-      toc: true
+format: pdf
 editor: source
 ---
 
