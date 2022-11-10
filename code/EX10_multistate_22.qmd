@@ -1,0 +1,229 @@
+---
+title: "DEM 7223 - Event History Analysis - Multistate Models"
+author:
+- name: '[Corey S. Sparks, PhD](https://coreysparks.github.io)'
+  affiliation: '[The University of Texas at San Antonio](https://hcap.utsa.edu/demography)'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format: 
+    html:
+      self-contained: true
+      code-fold: true
+      code-tools: true
+      code-link: true
+      df-print: paged
+      toc: true
+editor: source
+---
+
+## **Multi-state models**
+
+ * We have discussed these in passing several times e.g. multinomial logistic regression
+ 
+ * Multi-state models are a general form, because they not only allow multiple types of transitions, but these transitions can occur multiple times
+
+ * Think of the single>married>divorced>dead model
+ 
+ ![SMD Model](C:/Users/ozd504/Github/DEM7223/images/smd_mode.png)
+
+This example will illustrate how to fit a multistate hazard model using the multinomial logit model. 
+
+The outcome for the example is whether a family experiences a transition between poverty states between waves 1 and 5 of the data. The data from the [ECLS-K ](http://nces.ed.gov/ecls/kinderdatainformation.asp). 
+
+
+```{r load}
+#Load required libraries
+library(survival)
+library(car)
+library(survey)
+library(lattice)
+```
+
+
+First we load our data
+```{r}
+eclskk5<-readRDS("C:/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_20//data/eclskk5.rds")
+names(eclskk5)<-tolower(names(eclskk5))
+#get out only the variables I'm going to use for this example
+myvars<-c( "childid","x_chsex_r", "x_raceth_r", "x1kage_r","x4age",
+           "x5age", "x6age", "x7age", "x2povty","x4povty_i", "x6povty_i",
+           "x8povty_i","x12par1ed_i", "s2_id","w6c6p_6psu",
+           "w6c6p_6str", "w6c6p_20")
+eclskk5<-eclskk5[,myvars]
+
+
+# time varying variables
+eclskk5$age_1<-ifelse(eclskk5$x1kage_r==-9, NA, eclskk5$x1kage_r/12)
+eclskk5$age_2<-ifelse(eclskk5$x4age==-9, NA, eclskk5$x4age/12)
+#for the later waves, the NCES group the ages into ranges of months,
+#so 1= <105 months, 2=105 to 108 months. 
+#So, I fix the age at the midpoint of the interval they give,
+#and make it into years by dividing by 12
+
+eclskk5$age_3<-ifelse(eclskk5$x5age==-9, NA, eclskk5$x5age/12)
+
+eclskk5$pov_1<-ifelse(eclskk5$x2povty==1,1,0)
+eclskk5$pov_2<-ifelse(eclskk5$x4povty_i==1,1,0)
+eclskk5$pov_3<-ifelse(eclskk5$x6povty_i==1,1,0)
+
+
+#Time constant variables
+#Recode race with white, non Hispanic as reference using dummy vars
+eclskk5$race_rec<-Recode (eclskk5$x_raceth_r, recodes="1 = 'nhwhite';2='nhblack';3:4='hispanic';5='nhasian'; 6:8='other';-9=NA", as.factor = T)
+eclskk5$male<-Recode(eclskk5$x_chsex_r, recodes="1=1; 2=0; -9=NA")
+eclskk5$mlths<-Recode(eclskk5$x12par1ed_i, recodes = "1:2=1; 3:9=0; else = NA")
+eclskk5$mgths<-Recode(eclskk5$x12par1ed_i, recodes = "1:3=0; 4:9=1; else =NA") 
+```
+
+Now, I need to form the transition variable, this is my event variable, and in this case it will be 1 if a child enters poverty between the first wave of the data and the third grade wave, and 0 otherwise.
+
+**NOTE** I need to remove any children who are already in poverty age wave 1, because they are not at risk of experiencing **this particular** transition. Again, this is called forming the *risk set*
+
+```{r}
+eclskk5<-eclskk5 %>% filter(is.na(pov_1)==F &
+                  is.na(pov_2)==F &
+                  is.na(pov_3)==F & 
+                  is.na(age_1)==F &
+                  is.na(age_2)==F &
+                  is.na(age_3)==F &
+                    pov_1!=1)
+```
+
+Now we do the entire data set. To analyze data longitudinally, we need to reshape the data from the current "wide" format (repeated measures in columns) to a "long" format (repeated observations in rows). The `reshape()` function allows us to do this easily. It allows us to specify our repeated measures, time varying covariates as well as time-constant covariates.
+
+```{r}
+e.long1 <- eclskk5 %>%
+  #rename(wt = w4c4p_40,strata= w4c4p_4str, psu = w4c4p_4psu)%>%
+  select(childid,male, race_rec, mlths, mgths,   #time constant
+        age_1, age_2, age_3, #t-varying variables
+         pov_1, pov_2, pov_3, 
+        w6c6p_6psu, w6c6p_6str, w6c6p_20)%>%
+   pivot_longer(cols = c(-childid, -male, -race_rec, -mlths, -mgths,
+                         -w6c6p_6psu, -w6c6p_6str, -w6c6p_20), #time constant variables go here
+               names_to  = c(".value", "wave"), #make wave variable and put t-v vars into columns
+               names_sep = "_") %>% #all t-v variables have _ between name and time, like age_1, age_2
+  group_by(childid)%>%
+  mutate(age_enter = round(age), 
+         age_exit = round(lead(age, 1, order_by=childid)))%>%
+  mutate(nexpov = dplyr::lead(pov,n=1, order_by = childid))%>%
+  mutate(povtran = ifelse(nexpov == 1 & pov == 0, 1, 0))%>%
+  filter(is.na(age_exit)==F)%>%
+  ungroup()%>%
+  filter(complete.cases(age_enter, age_exit, povtran,
+                        mlths, mgths, race_rec,w6c6p_6psu))
+
+
+```
+###Create states for poverty transitions
+
+Now, I need to form the transition variable, this is my event variable, and in this case it will be categorical. It is categorical becuase we have the following state-space in our outcome.
+
+![State space](C:/Users/ozd504/Google Drive/classes/dem7223/dem7223_19/povtran_space.png)
+
+
+```{r}
+#find which kids failed in the first time period and remove them from the second risk period risk set
+#binary outcomes for particular transition
+e.long$povtran<-NA #transition into poverty
+e.long$povtran[e.long$pov1==0&e.long$pov2==1&e.long$time==1]<-1
+e.long$povtran[e.long$pov2==0&e.long$pov3==1&e.long$time==2]<-1
+e.long$povtran[e.long$pov1==0&e.long$pov2==0&e.long$time==1]<-0
+e.long$povtran[e.long$pov2==0&e.long$pov3==0&e.long$time==2]<-0
+
+e.long$povtran2<-NA #transition out of poverty
+e.long$povtran2[e.long$pov1==1&e.long$pov2==1&e.long$time==1]<-0
+e.long$povtran2[e.long$pov2==1&e.long$pov3==1&e.long$time==2]<-0
+e.long$povtran2[e.long$pov1==1&e.long$pov2==0&e.long$time==1]<-1
+e.long$povtran2[e.long$pov2==1&e.long$pov3==0&e.long$time==2]<-1
+#
+
+#Categorical outcome
+e.long$povcat<-NA
+e.long$povcat[e.long$pov1==0&e.long$pov2==0&e.long$time==1]<-"staynotinpov"
+e.long$povcat[e.long$pov1==1&e.long$pov2==1&e.long$time==1]<-"stayinpov"
+e.long$povcat[e.long$pov1==0&e.long$pov2==1&e.long$time==1]<-"notpov_pov"
+e.long$povcat[e.long$pov1==1&e.long$pov2==0&e.long$time==1]<-"pov_notpov"
+
+e.long$povcat[e.long$pov2==0&e.long$pov3==0&e.long$time==2]<-"staynotinpov"
+e.long$povcat[e.long$pov2==1&e.long$pov3==1&e.long$time==2]<-"stayinpov"
+e.long$povcat[e.long$pov2==0&e.long$pov3==1&e.long$time==2]<-"notpov_pov"
+e.long$povcat[e.long$pov2==1&e.long$pov3==0&e.long$time==2]<-"pov_notpov"
+
+e.long$povcat<-as.factor(e.long$povcat)
+e.long$povcat<-relevel(e.long$povcat, ref = "staynotinpov")
+
+```
+
+```{r, results='asis'}
+knitr::kable(head(e.long[, c("childid", "pov1", "pov2", "pov3","time",  "povcat")], n=20))
+
+table(e.long$time, e.long$povcat)
+
+```
+
+## Model for categorical outcome
+We will use the multinomial logit model for this outcome, as it is specified for modeling a categorical outcome. The `nnet` package has the `multinom()` function to do this, it accepts weights but not sample design. Also, its summary functions do not return test statistics or p-values, so we will need to create those.
+
+```{r}
+library(nnet)
+multnm<-multinom(factor(povcat)~age+mlths+mgths+momwork+partype+race_rec,
+                 data=e.long,
+                 weights=w6c6p_20/mean(w6c6p_20, na.rm=T),
+                 maxit=500)
+
+sums<-summary(multnm) #store model 
+
+#create test statistics
+sums$z<-sums$coefficients/sums$standard.errors
+
+#create p values
+sums$pval<-2*pnorm(abs(sums$z), lower.tail=FALSE)
+round(sums$pval,3)
+
+#odds ratios
+round(exp(sums$coefficients),3)
+
+
+```
+
+This can be a lot to interpret, so we will also visualize the model output by estimating the transition probabilities themselves and graphing them. 
+
+Now we get estimates of the transition probabilities from the model to visualize them
+
+```{r}
+dat1<-expand.grid(age=4:9,mlths=c(0,1), mgths=c(0,1), momwork=levels(e.long$momwork), partype=levels(e.long$partype), race_rec=levels(e.long$race_rec))
+
+test1<-predict(multnm, newdata=dat1, type="probs")
+
+dat1$pstaynotpov<-test1[,1]
+dat1$pnotpov_pov<-test1[,2]
+dat1$ppov_notpov<-test1[,3]
+dat1$pstayinpov<-test1[,4]
+
+#Reshape the data
+library(data.table)
+preddat<-melt(setDT(dat1),
+              id.vars=c("age", "mlths", "mgths", "momwork","partype", "race_rec"),
+              measure.vars=c("pstaynotpov", "pnotpov_pov", "ppov_notpov", "pstayinpov"))
+
+```
+
+```{r, fig.width=9, fig.height=8}
+library(ggplot2)
+library(dplyr)
+preddat%>%
+  filter(race_rec%in%c("nhwhite", "hispanic", "nhblack"))%>%
+  filter(mlths==0, mgths==0)%>%
+  filter(momwork=="fulltime")%>%
+  ggplot()+geom_bar(aes(y=value, x=age, fill=variable), stat="identity")+facet_wrap(~race_rec+partype)+ggtitle(label = "Poverty transition probabilities by race and parent type", subtitle = "Full time working parent")
+
+preddat%>%
+  filter(race_rec%in%c("nhwhite", "hispanic", "nhblack"))%>%
+  filter(mlths==0, mgths==0)%>%
+  #filter(momwork=="fulltime")%>%
+  filter(partype=="twoparent")%>%
+  ggplot()+geom_bar(aes(y=value, x=age, fill=variable), stat="identity")+facet_wrap(~race_rec+momwork)+ggtitle(label = "Poverty transition probabilities by race and work status", subtitle = "Two parent households")
+
+
+```
+
+
