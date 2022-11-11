@@ -44,7 +44,7 @@ library(VGAM, quietly = T)
 
 First we load our data
 ```{r}
-eclskk5<-readRDS("C:/Users/ozd504/OneDrive - University of Texas at San Antonio/classes/dem7223/dem7223_22/data/eclskk5.rds")
+eclskk5<-readRDS("/home/corey/ExpanDrive/OneDrive Business/classes/dem7223/dem7223_22/data/eclskk5.rds")
 names(eclskk5)<-tolower(names(eclskk5))
 #get out only the variables I'm going to use for this example
 myvars<-c( "childid","x_chsex_r", "x_raceth_r", "x1kage_r","x4age",
@@ -188,7 +188,7 @@ des <- survey::svydesign(ids = ~w6c6p_6psu,
                          data=e.long1)
 library(svyVGAM)
 library(gtsummary)
-mfit<-svy_vglm(povtran ~ factor(age_enter)+mlths+mgths+race_rec,
+mfit<-svy_vglm(povtran ~ age_enter+mlths+mgths+race_rec,
            family=multinomial(refLevel = "stay_notinpov"),
            design = des)
 mfit%>%
@@ -201,7 +201,7 @@ This can be a lot to interpret, so we will also visualize the model output by es
 Now we get estimates of the transition probabilities from the model to visualize them
 
 ```{r}
-mfit2<-vglm(povtran ~ factor(age_enter)+mlths+mgths+race_rec,
+mfit2<-vglm(povtran ~ mlths+mgths+race_rec,
            family=multinomial(refLevel = "stay_notinpov"),
            data=e.long1,
            weights = w6c6p_20/mean(w6c6p_20))
